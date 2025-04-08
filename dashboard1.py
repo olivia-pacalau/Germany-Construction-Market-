@@ -8,7 +8,7 @@ import sqlite3
 # Page setup
 st.set_page_config(
     page_title="Construction Industry Market Analysis",
-    layout="centered",
+    layout="wide",
     initial_sidebar_state="auto"
 )
 
