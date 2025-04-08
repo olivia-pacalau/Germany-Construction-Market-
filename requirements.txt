@@ -2,4 +2,4 @@ streamlit
 prophet
 pandas
 plotly
-sqlite3
+scikit-learn
