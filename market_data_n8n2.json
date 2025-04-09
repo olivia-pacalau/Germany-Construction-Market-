@@ -1,0 +1,770 @@
+{
+  "BDPRR": {
+    "metadata": {
+      "Country": "Germany",
+      "Category": "Price to Rent Ratio",
+      "Frequency": "Quarterly",
+      "HistoricalDataSymbol": "BDPRR"
+    },
+    "data": [
+      {
+        "DateTime": "2024-06-30",
+        "Value": 126.8732
+      },
+      {
+        "DateTime": "2024-03-31",
+        "Value": 127.4907
+      },
+      {
+        "DateTime": "2023-12-31",
+        "Value": 127.513
+      },
+      {
+        "DateTime": "2023-09-30",
+        "Value": 130.3149
+      },
+      {
+        "DateTime": "2023-06-30",
+        "Value": 133.208
+      },
+      {
+        "DateTime": "2023-03-31",
+        "Value": 137.2187
+      },
+      {
+        "DateTime": "2022-12-31",
+        "Value": 140.1202
+      },
+      {
+        "DateTime": "2022-09-30",
+        "Value": 148.1283
+      },
+      {
+        "DateTime": "2022-06-30",
+        "Value": 150.6491
+      },
+      {
+        "DateTime": "2022-03-31",
+        "Value": 150.2033
+      },
+      {
+        "DateTime": "2021-12-31",
+        "Value": 148.5005
+      },
+      {
+        "DateTime": "2021-09-30",
+        "Value": 144.7554
+      },
+      {
+        "DateTime": "2021-06-30",
+        "Value": 140.2015
+      },
+      {
+        "DateTime": "2021-03-31",
+        "Value": 136.6782
+      },
+      {
+        "DateTime": "2020-12-31",
+        "Value": 133.6253
+      },
+      {
+        "DateTime": "2020-09-30",
+        "Value": 130.2845
+      },
+      {
+        "DateTime": "2020-06-30",
+        "Value": 127.4312
+      },
+      {
+        "DateTime": "2020-03-31",
+        "Value": 126.4912
+      },
+      {
+        "DateTime": "2019-12-31",
+        "Value": 124.5335
+      },
+      {
+        "DateTime": "2019-09-30",
+        "Value": 122.1305
+      },
+      {
+        "DateTime": "2019-06-30",
+        "Value": 121.3531
+      },
+      {
+        "DateTime": "2019-03-31",
+        "Value": 119.4165
+      }
+    ]
+  },
+  "BDRPP": {
+    "metadata": {
+      "Country": "Germany",
+      "Category": "Residential Property Prices",
+      "Frequency": "Quarterly",
+      "HistoricalDataSymbol": "BDRPP"
+    },
+    "data": [
+      {
+        "DateTime": "2024-06-30",
+        "Value": -2.56
+      },
+      {
+        "DateTime": "2024-03-31",
+        "Value": -5.11
+      },
+      {
+        "DateTime": "2023-12-31",
+        "Value": -7.16
+      },
+      {
+        "DateTime": "2023-09-30",
+        "Value": -10.2
+      },
+      {
+        "DateTime": "2023-06-30",
+        "Value": -9.71
+      },
+      {
+        "DateTime": "2023-03-31",
+        "Value": -6.85
+      },
+      {
+        "DateTime": "2022-12-31",
+        "Value": -3.94
+      },
+      {
+        "DateTime": "2022-09-30",
+        "Value": 4.15
+      },
+      {
+        "DateTime": "2022-06-30",
+        "Value": 9.33
+      },
+      {
+        "DateTime": "2022-03-31",
+        "Value": 11.55
+      },
+      {
+        "DateTime": "2021-12-31",
+        "Value": 12.6
+      },
+      {
+        "DateTime": "2021-09-30",
+        "Value": 12.77
+      },
+      {
+        "DateTime": "2021-06-30",
+        "Value": 11.47
+      },
+      {
+        "DateTime": "2021-03-31",
+        "Value": 9.31
+      },
+      {
+        "DateTime": "2020-12-31",
+        "Value": 8.75
+      },
+      {
+        "DateTime": "2020-09-30",
+        "Value": 8.3
+      },
+      {
+        "DateTime": "2020-06-30",
+        "Value": 6.61
+      },
+      {
+        "DateTime": "2020-03-31",
+        "Value": 7.4
+      },
+      {
+        "DateTime": "2019-12-31",
+        "Value": 6.51
+      },
+      {
+        "DateTime": "2019-09-30",
+        "Value": 5.27
+      },
+      {
+        "DateTime": "2019-06-30",
+        "Value": 5.94
+      },
+      {
+        "DateTime": "2019-03-31",
+        "Value": 5.34
+      }
+    ]
+  },
+  "GERMANYBUIPER": {
+    "metadata": {
+      "Country": "Germany",
+      "Category": "Building Permits",
+      "Frequency": "Monthly",
+      "HistoricalDataSymbol": "GERMANYBUIPER"
+    },
+    "data": [
+      {
+        "DateTime": "2024-09-30",
+        "Value": 11616.0
+      },
+      {
+        "DateTime": "2024-08-31",
+        "Value": 15005.0
+      },
+      {
+        "DateTime": "2024-07-31",
+        "Value": 13862.0
+      },
+      {
+        "DateTime": "2024-06-30",
+        "Value": 14437.0
+      },
+      {
+        "DateTime": "2024-05-31",
+        "Value": 14614.0
+      },
+      {
+        "DateTime": "2024-04-30",
+        "Value": 14623.0
+      },
+      {
+        "DateTime": "2024-03-31",
+        "Value": 15101.0
+      },
+      {
+        "DateTime": "2024-02-29",
+        "Value": 15195.0
+      },
+      {
+        "DateTime": "2024-01-31",
+        "Value": 13841.0
+      },
+      {
+        "DateTime": "2023-12-31",
+        "Value": 17423.0
+      },
+      {
+        "DateTime": "2023-11-30",
+        "Value": 17638.0
+      },
+      {
+        "DateTime": "2023-10-31",
+        "Value": 19472.0
+      },
+      {
+        "DateTime": "2023-09-30",
+        "Value": 16785.0
+      },
+      {
+        "DateTime": "2023-08-31",
+        "Value": 16334.0
+      },
+      {
+        "DateTime": "2023-07-31",
+        "Value": 17315.0
+      },
+      {
+        "DateTime": "2023-06-30",
+        "Value": 17936.0
+      },
+      {
+        "DateTime": "2023-05-31",
+        "Value": 19594.0
+      },
+      {
+        "DateTime": "2023-04-30",
+        "Value": 18092.0
+      },
+      {
+        "DateTime": "2023-03-31",
+        "Value": 20757.0
+      },
+      {
+        "DateTime": "2023-02-28",
+        "Value": 19192.0
+      },
+      {
+        "DateTime": "2023-01-31",
+        "Value": 19023.0
+      },
+      {
+        "DateTime": "2022-12-31",
+        "Value": 28732.0
+      },
+      {
+        "DateTime": "2022-11-30",
+        "Value": 20808.0
+      },
+      {
+        "DateTime": "2022-10-31",
+        "Value": 21811.0
+      },
+      {
+        "DateTime": "2022-09-30",
+        "Value": 23726.0
+      },
+      {
+        "DateTime": "2022-08-31",
+        "Value": 24538.0
+      },
+      {
+        "DateTime": "2022-07-31",
+        "Value": 26781.0
+      },
+      {
+        "DateTime": "2022-06-30",
+        "Value": 26622.0
+      },
+      {
+        "DateTime": "2022-05-31",
+        "Value": 28060.0
+      },
+      {
+        "DateTime": "2022-04-30",
+        "Value": 27636.0
+      },
+      {
+        "DateTime": "2022-03-31",
+        "Value": 30857.0
+      },
+      {
+        "DateTime": "2022-02-28",
+        "Value": 24941.0
+      },
+      {
+        "DateTime": "2022-01-31",
+        "Value": 26507.0
+      },
+      {
+        "DateTime": "2021-12-31",
+        "Value": 35939.0
+      },
+      {
+        "DateTime": "2021-11-30",
+        "Value": 24903.0
+      },
+      {
+        "DateTime": "2021-10-31",
+        "Value": 26129.0
+      },
+      {
+        "DateTime": "2021-09-30",
+        "Value": 26378.0
+      },
+      {
+        "DateTime": "2021-08-31",
+        "Value": 27567.0
+      },
+      {
+        "DateTime": "2021-07-31",
+        "Value": 27358.0
+      },
+      {
+        "DateTime": "2021-06-30",
+        "Value": 28004.0
+      },
+      {
+        "DateTime": "2021-05-31",
+        "Value": 29027.0
+      },
+      {
+        "DateTime": "2021-04-30",
+        "Value": 26043.0
+      },
+      {
+        "DateTime": "2021-03-31",
+        "Value": 34050.0
+      },
+      {
+        "DateTime": "2021-02-28",
+        "Value": 26829.0
+      },
+      {
+        "DateTime": "2021-01-31",
+        "Value": 24351.0
+      },
+      {
+        "DateTime": "2020-12-31",
+        "Value": 32399.0
+      },
+      {
+        "DateTime": "2020-11-30",
+        "Value": 29071.0
+      },
+      {
+        "DateTime": "2020-10-31",
+        "Value": 26760.0
+      },
+      {
+        "DateTime": "2020-09-30",
+        "Value": 26450.0
+      },
+      {
+        "DateTime": "2020-08-31",
+        "Value": 27733.0
+      },
+      {
+        "DateTime": "2020-07-31",
+        "Value": 27613.0
+      },
+      {
+        "DateTime": "2020-06-30",
+        "Value": 30663.0
+      },
+      {
+        "DateTime": "2020-05-31",
+        "Value": 28434.0
+      },
+      {
+        "DateTime": "2020-04-30",
+        "Value": 27043.0
+      },
+      {
+        "DateTime": "2020-03-31",
+        "Value": 24708.0
+      },
+      {
+        "DateTime": "2020-02-29",
+        "Value": 21791.0
+      },
+      {
+        "DateTime": "2020-01-31",
+        "Value": 24464.0
+      },
+      {
+        "DateTime": "2019-12-31",
+        "Value": 36606.0
+      },
+      {
+        "DateTime": "2019-11-30",
+        "Value": 26954.0
+      },
+      {
+        "DateTime": "2019-10-31",
+        "Value": 28311.0
+      },
+      {
+        "DateTime": "2019-09-30",
+        "Value": 25522.0
+      },
+      {
+        "DateTime": "2019-08-31",
+        "Value": 27365.0
+      },
+      {
+        "DateTime": "2019-07-31",
+        "Value": 27923.0
+      },
+      {
+        "DateTime": "2019-06-30",
+        "Value": 24690.0
+      },
+      {
+        "DateTime": "2019-05-31",
+        "Value": 26724.0
+      },
+      {
+        "DateTime": "2019-04-30",
+        "Value": 26752.0
+      },
+      {
+        "DateTime": "2019-03-31",
+        "Value": 23550.0
+      },
+      {
+        "DateTime": "2019-02-28",
+        "Value": 19501.0
+      },
+      {
+        "DateTime": "2019-01-31",
+        "Value": 23983.0
+      }
+    ]
+  },
+  "GermanyConOut": {
+    "metadata": {
+      "Country": "Germany",
+      "Category": "Construction Output",
+      "Frequency": "Monthly",
+      "HistoricalDataSymbol": "GermanyConOut"
+    },
+    "data": [
+      {
+        "DateTime": "2024-09-30",
+        "Value": -4.8
+      },
+      {
+        "DateTime": "2024-08-31",
+        "Value": -3.7
+      },
+      {
+        "DateTime": "2024-07-31",
+        "Value": -5.6
+      },
+      {
+        "DateTime": "2024-06-30",
+        "Value": -3.5
+      },
+      {
+        "DateTime": "2024-05-31",
+        "Value": -6.8
+      },
+      {
+        "DateTime": "2024-04-30",
+        "Value": -3.9
+      },
+      {
+        "DateTime": "2024-03-31",
+        "Value": -0.4
+      },
+      {
+        "DateTime": "2024-02-29",
+        "Value": -1.6
+      },
+      {
+        "DateTime": "2024-01-31",
+        "Value": -6.5
+      },
+      {
+        "DateTime": "2023-12-31",
+        "Value": -0.1
+      },
+      {
+        "DateTime": "2023-11-30",
+        "Value": -2.8
+      },
+      {
+        "DateTime": "2023-10-31",
+        "Value": -3.2
+      },
+      {
+        "DateTime": "2023-09-30",
+        "Value": -0.1
+      },
+      {
+        "DateTime": "2023-08-31",
+        "Value": -0.8
+      },
+      {
+        "DateTime": "2023-07-31",
+        "Value": 1.2
+      },
+      {
+        "DateTime": "2023-06-30",
+        "Value": -1.9
+      },
+      {
+        "DateTime": "2023-05-31",
+        "Value": 0.5
+      },
+      {
+        "DateTime": "2023-04-30",
+        "Value": 0.7
+      },
+      {
+        "DateTime": "2023-03-31",
+        "Value": -3.5
+      },
+      {
+        "DateTime": "2023-02-28",
+        "Value": -0.4
+      },
+      {
+        "DateTime": "2023-01-31",
+        "Value": -3.2
+      },
+      {
+        "DateTime": "2022-12-31",
+        "Value": -8.4
+      },
+      {
+        "DateTime": "2022-11-30",
+        "Value": -3.5
+      },
+      {
+        "DateTime": "2022-10-31",
+        "Value": -2.5
+      },
+      {
+        "DateTime": "2022-09-30",
+        "Value": -3.8
+      },
+      {
+        "DateTime": "2022-08-31",
+        "Value": -2.9
+      },
+      {
+        "DateTime": "2022-07-31",
+        "Value": -3.2
+      },
+      {
+        "DateTime": "2022-06-30",
+        "Value": -3.0
+      },
+      {
+        "DateTime": "2022-05-31",
+        "Value": -3.6
+      },
+      {
+        "DateTime": "2022-04-30",
+        "Value": -4.5
+      },
+      {
+        "DateTime": "2022-03-31",
+        "Value": -3.0
+      },
+      {
+        "DateTime": "2022-02-28",
+        "Value": 8.5
+      },
+      {
+        "DateTime": "2022-01-31",
+        "Value": 7.7
+      },
+      {
+        "DateTime": "2021-12-31",
+        "Value": -9.1
+      },
+      {
+        "DateTime": "2021-11-30",
+        "Value": -3.1
+      },
+      {
+        "DateTime": "2021-10-31",
+        "Value": -1.5
+      },
+      {
+        "DateTime": "2021-09-30",
+        "Value": -0.9
+      },
+      {
+        "DateTime": "2021-08-31",
+        "Value": -1.7
+      },
+      {
+        "DateTime": "2021-07-31",
+        "Value": 2.5
+      },
+      {
+        "DateTime": "2021-06-30",
+        "Value": -1.1
+      },
+      {
+        "DateTime": "2021-05-31",
+        "Value": 2.5
+      },
+      {
+        "DateTime": "2021-04-30",
+        "Value": 2.3
+      },
+      {
+        "DateTime": "2021-03-31",
+        "Value": 1.9
+      },
+      {
+        "DateTime": "2021-02-28",
+        "Value": -9.5
+      },
+      {
+        "DateTime": "2021-01-31",
+        "Value": -12.9
+      },
+      {
+        "DateTime": "2020-12-31",
+        "Value": 10.6
+      },
+      {
+        "DateTime": "2020-11-30",
+        "Value": 3.1
+      },
+      {
+        "DateTime": "2020-10-31",
+        "Value": 2.3
+      },
+      {
+        "DateTime": "2020-09-30",
+        "Value": 0.2
+      },
+      {
+        "DateTime": "2020-08-31",
+        "Value": -0.1
+      },
+      {
+        "DateTime": "2020-07-31",
+        "Value": -1.8
+      },
+      {
+        "DateTime": "2020-06-30",
+        "Value": 3.5
+      },
+      {
+        "DateTime": "2020-05-31",
+        "Value": 1.7
+      },
+      {
+        "DateTime": "2020-04-30",
+        "Value": -0.2
+      },
+      {
+        "DateTime": "2020-03-31",
+        "Value": 3.6
+      },
+      {
+        "DateTime": "2020-02-29",
+        "Value": 3.2
+      },
+      {
+        "DateTime": "2020-01-31",
+        "Value": 12.4
+      },
+      {
+        "DateTime": "2019-12-31",
+        "Value": 0.7
+      },
+      {
+        "DateTime": "2019-11-30",
+        "Value": 3.6
+      },
+      {
+        "DateTime": "2019-10-31",
+        "Value": 1.2
+      },
+      {
+        "DateTime": "2019-09-30",
+        "Value": 2.0
+      },
+      {
+        "DateTime": "2019-08-31",
+        "Value": 2.7
+      },
+      {
+        "DateTime": "2019-07-31",
+        "Value": 3.0
+      },
+      {
+        "DateTime": "2019-06-30",
+        "Value": 3.4
+      },
+      {
+        "DateTime": "2019-05-31",
+        "Value": 0.3
+      },
+      {
+        "DateTime": "2019-04-30",
+        "Value": 5.9
+      },
+      {
+        "DateTime": "2019-03-31",
+        "Value": 8.8
+      },
+      {
+        "DateTime": "2019-02-28",
+        "Value": 12.1
+      },
+      {
+        "DateTime": "2019-01-31",
+        "Value": 0.0
+      }
+    ]
+  }
+}
