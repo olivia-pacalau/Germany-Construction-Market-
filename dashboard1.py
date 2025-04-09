@@ -98,7 +98,7 @@ st.markdown("---")
 # Function to download the database file and return the temporary file path
 @st.cache_data
 def download_database():
-    url = "https://raw.githubusercontent.com/olivia-pacalau/Germany-Construction-Data-/main/market_data.db"
+    url = "https://raw.githubusercontent.com/olivia-pacalau/Germany-Construction-Market-/main/market_data.db"
     response = requests.get(url)
     response.raise_for_status()  # Raise an error if the request fails
 
