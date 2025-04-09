@@ -3,6 +3,7 @@ import requests
 import sqlite3
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objs as go
 import tempfile
 import os
 
@@ -107,25 +108,34 @@ def download_database():
 
     return temp_file_path
 
-# Function to load the yearly data for the bar chart
+# Function to load all data from the database
 @st.cache_data
-def load_yearly_data(temp_file_path):
+def load_all_data(temp_file_path):
     # Create a new connection in the current thread
     conn = sqlite3.connect(temp_file_path)
 
-    # Load the market_data_yearly table
-    df_yearly = pd.read_sql("SELECT year, building_permits FROM market_data_yearly", conn)
+    # Load the quarterly and yearly tables
+    df_quarterly = pd.read_sql("SELECT * FROM market_data_quarterly", conn)
+    df_quarterly["datetime"] = pd.to_datetime(df_quarterly["datetime"])
+    df_quarterly = df_quarterly.dropna()
+
+    df_yearly = pd.read_sql("SELECT * FROM market_data_yearly", conn)
+    df_yearly["datetime"] = pd.to_datetime(df_yearly["datetime"])
     df_yearly = df_yearly.dropna()
+
+    # Load the growth tables
+    df_qoq = pd.read_sql("SELECT * FROM market_data_qoq", conn)
+    df_yoy = pd.read_sql("SELECT * FROM market_data_yoy", conn)
 
     # Close the connection
     conn.close()
 
-    return df_yearly
+    return df_quarterly, df_yearly, df_qoq, df_yoy
 
 # Download the database and load the data
 try:
     temp_file_path = download_database()
-    df_yearly = load_yearly_data(temp_file_path)
+    df_quarterly, df_yearly, df_qoq, df_yoy = load_all_data(temp_file_path)
     # Clean up the temporary file
     os.unlink(temp_file_path)
 except Exception as e:
@@ -137,7 +147,56 @@ except Exception as e:
             pass  # File might have already been deleted
     st.stop()
 
-# Bar Chart: Building Permits per Year
+# Slicers (Filters)
+st.markdown("### Filters")
+col1, col2 = st.columns(2)
+
+with col1:
+    frequency = st.selectbox("Select Frequency", ["Quarterly", "Yearly"], index=0)
+
+with col2:
+    # Metric selector
+    metrics = ["building_permits", "price_to_rent_ratio", "construction_output", "residential_prices"]
+    selected_metrics = st.multiselect("Select Metrics to Display", metrics, default=metrics)
+
+# Filter data based on frequency
+if frequency == "Quarterly":
+    df = df_quarterly.copy()
+else:
+    df = df_yearly.copy()
+
+# 1. Time Series Line Chart
+st.markdown("### 📈 Time Series of Construction Metrics")
+fig = go.Figure()
+for metric in selected_metrics:
+    fig.add_trace(go.Scatter(
+        x=df["datetime"],
+        y=df[metric],
+        mode="lines+markers",
+        name=metric.replace("_", " ").title()
+    ))
+fig.update_layout(
+    title="Construction Metrics Over Time",
+    xaxis_title="Date",
+    yaxis_title="Value",
+    legend_title="Metric",
+    hovermode="x unified"
+)
+st.plotly_chart(fig, use_container_width=True)
+
+# 2. Correlation Heatmap
+st.markdown("### 🔗 Correlation Heatmap")
+corr = df[metrics].corr()
+fig = px.imshow(
+    corr,
+    text_auto=True,
+    labels=dict(color="Correlation"),
+    color_continuous_scale="RdBu_r",
+    title="Correlation Between Construction Metrics"
+)
+st.plotly_chart(fig, use_container_width=True)
+
+# 3. Bar Chart: Building Permits per Year (already implemented)
 st.markdown("### 📊 Building Permits per Year")
 fig = px.bar(
     df_yearly,
@@ -152,5 +211,57 @@ fig.update_layout(
     xaxis_title="Year",
     yaxis_title="Number of Building Permits",
     showlegend=False
+)
+st.plotly_chart(fig, use_container_width=True)
+
+# 4. Quarter-over-Quarter Growth Bar Chart
+st.markdown("### 📊 Quarter-over-Quarter Growth")
+qoq_metrics = ["permits_qoq_pct", "prices_qoq_pct", "ratio_qoq_pct", "output_qoq_pct"]
+quarters = df_qoq["quarter"].unique()
+selected_quarter = st.selectbox("Select Quarter for QoQ Growth", quarters)
+df_qoq_selected = df_qoq[df_qoq["quarter"] == selected_quarter]
+qoq_data = pd.DataFrame({
+    "Metric": ["Building Permits", "Residential Prices", "Price to Rent Ratio", "Construction Output"],
+    "QoQ Growth (%)": [
+        df_qoq_selected["permits_qoq_pct"].iloc[0] if not df_qoq_selected.empty else 0,
+        df_qoq_selected["prices_qoq_pct"].iloc[0] if not df_qoq_selected.empty else 0,
+        df_qoq_selected["ratio_qoq_pct"].iloc[0] if not df_qoq_selected.empty else 0,
+        df_qoq_selected["output_qoq_pct"].iloc[0] if not df_qoq_selected.empty else 0
+    ]
+})
+fig = px.bar(
+    qoq_data,
+    x="QoQ Growth (%)",
+    y="Metric",
+    orientation="h",
+    title=f"QoQ Growth for {selected_quarter}",
+    color="QoQ Growth (%)",
+    color_continuous_scale="RdBu_r"
+)
+st.plotly_chart(fig, use_container_width=True)
+
+# 5. Year-over-Year Growth Bar Chart
+st.markdown("### 📊 Year-over-Year Growth")
+yoy_metrics = ["permits_yoy_pct", "prices_yoy_pct", "ratio_yoy_pct", "output_yoy_pct"]
+years = df_yoy["year"].unique()
+selected_year = st.selectbox("Select Year for YoY Growth", years)
+df_yoy_selected = df_yoy[df_yoy["year"] == selected_year]
+yoy_data = pd.DataFrame({
+    "Metric": ["Building Permits", "Residential Prices", "Price to Rent Ratio", "Construction Output"],
+    "YoY Growth (%)": [
+        df_yoy_selected["permits_yoy_pct"].iloc[0] if not df_yoy_selected.empty else 0,
+        df_yoy_selected["prices_yoy_pct"].iloc[0] if not df_yoy_selected.empty else 0,
+        df_yoy_selected["ratio_yoy_pct"].iloc[0] if not df_yoy_selected.empty else 0,
+        df_yoy_selected["output_yoy_pct"].iloc[0] if not df_yoy_selected.empty else 0
+    ]
+})
+fig = px.bar(
+    yoy_data,
+    x="YoQ Growth (%)",
+    y="Metric",
+    orientation="h",
+    title=f"YoY Growth for {selected_year}",
+    color="YoY Growth (%)",
+    color_continuous_scale="RdBu_r"
 )
 st.plotly_chart(fig, use_container_width=True)
