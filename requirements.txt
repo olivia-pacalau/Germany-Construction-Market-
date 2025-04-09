@@ -3,3 +3,4 @@ prophet
 pandas
 plotly
 scikit-learn
+requests
