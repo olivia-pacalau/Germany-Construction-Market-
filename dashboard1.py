@@ -8,6 +8,9 @@ import requests
 import io
 import json
 import plotly.express as px
+import time
+import tempfile
+import os
 
 # Page setup
 st.set_page_config(
@@ -45,25 +48,28 @@ with st.sidebar:
             # Send message to n8n and get response
             with st.chat_message("assistant"):
                 with st.spinner("Processing your request... This may take up to 30 seconds."):
-                    try:
-                        # Send POST request to n8n webhook with only the user's message
-                        payload = {
-                            "message": prompt
-                        }
-                        headers = {"Content-Type": "application/json"}
-                        response = requests.post(N8N_WEBHOOK_URL, json=payload, headers=headers, timeout=300)
-                        response.raise_for_status()
-
-                        # Handle the response from n8n (assuming plain text)
-                        assistant_response = response.text
-
-                    except requests.exceptions.RequestException as e:
-                        assistant_response = f"Error connecting to n8n: {str(e)}"
-                        st.write(f"Error: {assistant_response}")
+                    assistant_response = None
+                    for attempt in range(3):  # Retry up to 3 times
+                        try:
+                            # Send POST request to n8n webhook with only the user's message
+                            payload = {"message": prompt}
+                            headers = {"Content-Type": "application/json"}
+                            response = requests.post(N8N_WEBHOOK_URL, json=payload, headers=headers, timeout=300)
+                            response.raise_for_status()
+                            assistant_response = response.text
+                            break
+                        except requests.exceptions.RequestException as e:
+                            if attempt == 2:  # Last attempt
+                                assistant_response = f"Error connecting to n8n: {str(e)}"
+                                st.write(f"Error: {assistant_response}")
+                            else:
+                                st.write("Retrying...")
+                                time.sleep(2)  # Wait 2 seconds before retrying
 
                 # Display the response and add it to chat history
-                st.write(assistant_response)
-                st.session_state.messages.append({"role": "assistant", "content": assistant_response})
+                if assistant_response:
+                    st.write(assistant_response)
+                    st.session_state.messages.append({"role": "assistant", "content": assistant_response})
 
 # Main content area for the dashboard
 # Title & Header
@@ -76,18 +82,29 @@ st.markdown("---")
 # Load SQLite Data from GitHub
 @st.cache_data
 def load_database():
-    url = "https://raw.githubusercontent.com/olivia-pacalau/Germany-Construction-Market-/main/market_data.db"
+    url = "https://raw.githubusercontent.com/olivia-pacalau//Germany-Construction-Market-/main/market_data.db"
     response = requests.get(url)
     response.raise_for_status()  # Raise an error if the request fails
-    db_data = io.BytesIO(response.content)
-    return sqlite3.connect(db_data)
+
+    # Create a temporary file to store the database
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".db") as temp_file:
+        temp_file.write(response.content)
+        temp_file_path = temp_file.name
+
+    # Connect to the database using the temporary file path
+    conn = sqlite3.connect(temp_file_path)
+    return conn, temp_file_path
 
 try:
-    conn = load_database()
+    conn, temp_file_path = load_database()
     df = pd.read_sql("SELECT datetime, building_permits FROM market_data_quarterly", conn)
     df = df.dropna()
+    conn.close()  # Close the connection
+    os.unlink(temp_file_path)  # Delete the temporary file
 except Exception as e:
     st.error(f"Error loading database: {str(e)}")
+    if 'temp_file_path' in locals():
+        os.unlink(temp_file_path)  # Ensure the temporary file is deleted even if an error occurs
     st.stop()
 
 # Prophet requires specific format
