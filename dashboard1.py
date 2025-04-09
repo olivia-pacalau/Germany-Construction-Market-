@@ -136,10 +136,11 @@ def load_all_data(temp_file_path):
 try:
     temp_file_path = download_database()
     df_quarterly, df_yearly, df_qoq, df_yoy = load_all_data(temp_file_path)
-    # Clean up the temporary file
+    # Clean up the temporary file after loading the data
     os.unlink(temp_file_path)
 except Exception as e:
     st.error(f"Error loading data from database: {str(e)}")
+    # Ensure the temporary file is deleted if it exists
     if 'temp_file_path' in locals():
         try:
             os.unlink(temp_file_path)
@@ -196,7 +197,7 @@ fig = px.imshow(
 )
 st.plotly_chart(fig, use_container_width=True)
 
-# 3. Bar Chart: Building Permits per Year (already implemented)
+# 3. Bar Chart: Building Permits per Year
 st.markdown("### 📊 Building Permits per Year")
 fig = px.bar(
     df_yearly,
@@ -257,7 +258,7 @@ yoy_data = pd.DataFrame({
 })
 fig = px.bar(
     yoy_data,
-    x="YoQ Growth (%)",
+    x="YoY Growth (%)",
     y="Metric",
     orientation="h",
     title=f"YoY Growth for {selected_year}",
