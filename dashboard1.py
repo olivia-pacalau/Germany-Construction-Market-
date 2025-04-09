@@ -95,10 +95,10 @@ st.markdown("**Source:** [Trading Economics - Germany Indicators](https://tradin
 
 st.markdown("---")
 
-# Load SQLite Data from GitHub
-@st.cache_resource
-def load_database():
-    url = "https://raw.githubusercontent.com/olivia-pacalau/Germany-Construction-Market-/main/market_data.db"
+# Function to download the database file and return the temporary file path
+@st.cache_data
+def download_database():
+    url = "https://raw.githubusercontent.com/olivia-pacalau/Germany-Construction-Data-/main/market_data.db"
     response = requests.get(url)
     response.raise_for_status()  # Raise an error if the request fails
 
@@ -107,21 +107,15 @@ def load_database():
         temp_file.write(response.content)
         temp_file_path = temp_file.name
 
-    # Connect to the database using the temporary file path
+    return temp_file_path
+
+# Function to load all data from the database into DataFrames
+@st.cache_data
+def load_all_data(temp_file_path):
+    # Create a new connection in the current thread
     conn = sqlite3.connect(temp_file_path)
-    return conn, temp_file_path
 
-try:
-    conn, temp_file_path = load_database()
-except Exception as e:
-    st.error(f"Error loading database: {str(e)}")
-    if 'temp_file_path' in locals():
-        os.unlink(temp_file_path)  # Ensure the temporary file is deleted even if an error occurs
-    st.stop()
-
-# Load all relevant tables
-try:
-    # Unified tables
+    # Load all relevant tables
     df_quarterly = pd.read_sql("SELECT * FROM market_data_quarterly", conn)
     df_quarterly["datetime"] = pd.to_datetime(df_quarterly["datetime"])
     df_quarterly = df_quarterly.dropna()
@@ -131,16 +125,27 @@ try:
     df_yearly = df_yearly.dropna()
 
     # Growth tables
-    df_qoq = pd.read_sql("SELECT * FROM (SELECT quarter, current_permits, previous_permits, permits_qoq_pct, current_prices, previous_prices, prices_qoq_pct, current_ratio, previous_ratio, ratio_qoq_pct, current_output, previous_output, output_qoq_pct FROM market_data_quarterly ORDER BY datetime)", conn)
-    df_yoy = pd.read_sql("SELECT * FROM (WITH yearly AS (SELECT year, building_permits, residential_prices, price_to_rent_ratio, construction_output FROM market_data_yearly), yoy AS (SELECT curr.year, ROUND(curr.building_permits, 2) AS current_permits, ROUND(prev.building_permits, 2) AS previous_permits, ROUND((curr.building_permits - prev.building_permits) * 100.0 / prev.building_permits, 2) AS permits_yoy_pct, ROUND(curr.residential_prices, 2) AS current_prices, ROUND(prev.residential_prices, 2) AS previous_prices, ROUND((curr.residential_prices - prev.residential_prices) * 100.0 / prev.residential_prices, 2) AS prices_yoy_pct, ROUND(curr.price_to_rent_ratio, 2) AS current_ratio, ROUND(prev.price_to_rent_ratio, 2) AS previous_ratio, ROUND((curr.price_to_rent_ratio - prev.price_to_rent_ratio) * 100.0 / prev.price_to_rent_ratio, 2) AS ratio_yoy_pct, ROUND(curr.construction_output, 2) AS current_output, ROUND(prev.construction_output, 2) AS previous_output, ROUND((curr.construction_output - prev.construction_output) * 100.0 / prev.construction_output, 2) AS output_yoy_pct FROM yearly curr JOIN yearly prev ON curr.year = prev.year + 1) SELECT * FROM yoy ORDER BY year)", conn)
+    df_qoq = pd.read_sql("SELECT quarter, current_permits, previous_permits, permits_qoq_pct, current_prices, previous_prices, prices_qoq_pct, current_ratio, previous_ratio, ratio_qoq_pct, current_output, previous_output, output_qoq_pct FROM market_data_quarterly ORDER BY datetime", conn)
+    df_yoy = pd.read_sql("WITH yearly AS (SELECT year, building_permits, residential_prices, price_to_rent_ratio, construction_output FROM market_data_yearly), yoy AS (SELECT curr.year, ROUND(curr.building_permits, 2) AS current_permits, ROUND(prev.building_permits, 2) AS previous_permits, ROUND((curr.building_permits - prev.building_permits) * 100.0 / prev.building_permits, 2) AS permits_yoy_pct, ROUND(curr.residential_prices, 2) AS current_prices, ROUND(prev.residential_prices, 2) AS previous_prices, ROUND((curr.residential_prices - prev.residential_prices) * 100.0 / prev.residential_prices, 2) AS prices_yoy_pct, ROUND(curr.price_to_rent_ratio, 2) AS current_ratio, ROUND(prev.price_to_rent_ratio, 2) AS previous_ratio, ROUND((curr.price_to_rent_ratio - prev.price_to_rent_ratio) * 100.0 / prev.price_to_rent_ratio, 2) AS ratio_yoy_pct, ROUND(curr.construction_output, 2) AS current_output, ROUND(prev.construction_output, 2) AS previous_output, ROUND((curr.construction_output - prev.construction_output) * 100.0 / prev.construction_output, 2) AS output_yoy_pct FROM yearly curr JOIN yearly prev ON curr.year = prev.year + 1) SELECT * FROM yoy ORDER BY year", conn)
 
-    # Close the connection and delete the temporary file
+    # Close the connection
     conn.close()
+
+    return df_quarterly, df_yearly, df_qoq, df_yoy
+
+# Download the database and load the data
+try:
+    temp_file_path = download_database()
+    df_quarterly, df_yearly, df_qoq, df_yoy = load_all_data(temp_file_path)
+    # Clean up the temporary file
     os.unlink(temp_file_path)
 except Exception as e:
     st.error(f"Error loading data from database: {str(e)}")
     if 'temp_file_path' in locals():
-        os.unlink(temp_file_path)
+        try:
+            os.unlink(temp_file_path)
+        except FileNotFoundError:
+            pass  # File might have already been deleted
     st.stop()
 
 # Slicers (Filters)
