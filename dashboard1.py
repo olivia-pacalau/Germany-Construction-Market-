@@ -328,10 +328,28 @@ st.title("🏗️ Construction Market Analysis")
 conn = sqlite3.connect("market_data.db")
 
 # --- Bar Chart ---
-st.subheader("📊 Building Permits Over the Years")
-df_yearly = pd.read_sql("SELECT * FROM market_data_yearly", conn)
-fig_bar = px.bar(df_yearly, x="year", y="building_permits", title="Building Permits by Year", labels={"building_permits": "Building Permits"})
-st.plotly_chart(fig_bar, use_container_width=True)
+# --- Dynamic Bar Chart with Metric Selector ---
+st.subheader("📊 Market Trends Over the Years")
+
+# Metric selection
+metric_options = {
+    "Building Permits": "building_permits",
+    "Construction Output": "construction_output",
+    "Price to Rent Ratio": "price_to_rent_ratio"
+}
+selected_metric_label = st.selectbox("Select a metric to display:", list(metric_options.keys()))
+selected_metric = metric_options[selected_metric_label]
+
+# Plot the selected metric
+fig_dynamic = px.bar(
+    df_yearly,
+    x="year",
+    y=selected_metric,
+    title=f"{selected_metric_label} by Year",
+    labels={selected_metric: selected_metric_label}
+)
+st.plotly_chart(fig_dynamic, use_container_width=True)
+
 
 # --- Prophet Forecast ---
 st.subheader("🔮 Forecast: Building Permits (Prophet)")
