@@ -76,7 +76,7 @@ st.markdown("---")
 # Load SQLite Data from GitHub
 @st.cache_data
 def load_database():
-    url = "https://raw.githubusercontent.com/olivia-pacalau/zehnder-data/main/data/market_data.db"
+    url = "https://raw.githubusercontent.com/olivia-pacalau/Germany-Construction-Market-/main/market_data.db"
     response = requests.get(url)
     response.raise_for_status()  # Raise an error if the request fails
     db_data = io.BytesIO(response.content)
