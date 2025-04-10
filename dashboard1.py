@@ -124,7 +124,6 @@ st.markdown("### 📈 Building Permits Forecast")
 # Load prediction from database
 conn = sqlite3.connect("market_data.db")
 df_pred = pd.read_sql("SELECT * FROM building_permit_predictions ORDER BY current_quarter DESC LIMIT 1", conn)
-conn.close()
 
 if not df_pred.empty:
     actual = int(df_pred["actual_permits"].values[0])
