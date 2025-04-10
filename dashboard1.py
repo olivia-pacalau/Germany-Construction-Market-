@@ -223,3 +223,17 @@ st.plotly_chart(fig_yoy, use_container_width=True)
 with st.expander("🔍 View Raw Data Table"):
     st.dataframe(df_yoy, use_container_width=True)
 
+# Load moving average data
+with sqlite3.connect("market_data.db") as conn:
+    df_ma = pd.read_sql("SELECT * FROM market_data_m_avg", conn)
+
+st.markdown("### 🧮 Construction Output – 3-Month Moving Average")
+fig_ma = px.line(df_ma, x="date", y=["current_output", "output_3mo_avg"],
+                 labels={"value": "Construction Output", "date": "Date"},
+                 title="Construction Output vs 3-Month Moving Average",
+                 color_discrete_map={"current_output": "#1f77b4", "output_3mo_avg": "#ff7f0e"})
+
+fig_ma.update_layout(legend_title_text="Legend")
+st.plotly_chart(fig_ma, use_container_width=True)
+
+
