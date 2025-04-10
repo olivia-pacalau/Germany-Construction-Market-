@@ -54,9 +54,13 @@ with st.sidebar:
 
 
 # ----------------- MAIN CONTENT -----------------
-st.title("\U0001F3D7️ Construction Market Analysis")
-st.markdown("### 🇩🇪 Germany")
-st.markdown("[Data Source: TradingEconomics.com](https://tradingeconomics.com/)")
+st.markdown("""
+<div style='text-align: center;'>
+    <h1>🏗️ Construction Market Analysis</h1>
+    <h3>🇩🇪 Germany</h3>
+    <p><a href='https://tradingeconomics.com/' target='_blank'>Data Source: TradingEconomics.com</a></p>
+</div>
+""", unsafe_allow_html=True)
 
 # Connect to database
 conn = sqlite3.connect("market_data.db")
@@ -73,16 +77,24 @@ def calc_change(col):
 change_building = calc_change("building_permits")
 change_output = calc_change("construction_output")
 
-# Display KPI cards in columns
-col1, col2 = st.columns(2)
-
-with col1:
-    delta = f"{change_building:+.2f}%" if change_building is not None else "N/A"
-    st.metric("Building Permits – % Change from Last Month", delta, delta_color="normal")
-
-with col2:
-    delta = f"{change_output:+.2f}%" if change_output is not None else "N/A"
-    st.metric("Construction Output – % Change from Last Month", delta, delta_color="normal")
+# KPI cards
+st.markdown("""
+<div style='display: flex; justify-content: space-around; margin-bottom: 20px;'>
+    <div style='border: 1px solid #ccc; border-radius: 8px; padding: 10px; width: 22%; text-align: center;'>
+        <h4>Building Permits – % Change from Last Month</h4>
+        <p style='color: {color1}; font-size: 24px;'><strong>{change_building:+.2f}%</strong></p>
+    </div>
+    <div style='border: 1px solid #ccc; border-radius: 8px; padding: 10px; width: 22%; text-align: center;'>
+        <h4>Construction Output – % Change from Last Month</h4>
+        <p style='color: {color2}; font-size: 24px;'><strong>{change_output:+.2f}%</strong></p>
+    </div>
+</div>
+""".format(
+    change_building=change_building if change_building is not None else 0.0,
+    change_output=change_output if change_output is not None else 0.0,
+    color1="green" if change_building and change_building >= 0 else "red",
+    color2="green" if change_output and change_output >= 0 else "red"
+), unsafe_allow_html=True)
 
 # Visualization section
 with st.container(border=True):
@@ -94,23 +106,36 @@ with st.container(border=True):
     # Load appropriate table
     table = "market_data_quarterly" if granularity == "Quarterly" else "market_data_yearly"
     df = pd.read_sql(f"SELECT * FROM {table}", conn)
-    df['datetime'] = pd.to_datetime(df['datetime'])  # Ensure datetime is proper type
+    df['datetime'] = pd.to_datetime(df['datetime'])
 
     with col_select2:
         kpi_options = [col for col in df.columns if col not in ["datetime", "year", "quarter"]]
         kpi = st.selectbox("Select KPI to plot:", kpi_options)
 
-    # Scatter plot
     st.subheader(f"{kpi.replace('_', ' ').title()} Over Time ({granularity})")
     fig = px.scatter(df, x="datetime", y=kpi, title=f"{kpi.replace('_', ' ').title()} Over Time", 
                      labels={"datetime": "Date", kpi: kpi.replace('_', ' ').title()}, color_discrete_sequence=["#008080"])
     fig.update_traces(mode='lines+markers')
     st.plotly_chart(fig, use_container_width=True)
 
+# Forecast Section
+st.markdown("---")
+st.subheader("📈 Building Permits Forecast")
+
+# Display forecast cards
+df_quarter = pd.read_sql("SELECT * FROM market_data_quarterly ORDER BY datetime DESC LIMIT 1", conn)
+actual_permits = int(df_quarter['building_permits'].values[0])
+res_price = df_quarter['residential_prices'].values[0]
+predicted_permits = int(0.5 * res_price + 5000)  # Example dummy formula for prediction
+
+colf1, colf2 = st.columns(2)
+with colf1:
+    st.metric("This Quarter's Building Permits", f"{actual_permits:,}")
+with colf2:
+    st.metric("Next Quarter Forecast (based on residential prices)", f"{predicted_permits:,}")
+
 # Prophet Forecast section
 if Prophet:
-    st.markdown("---")
-    st.header("📈 Forecast Building Permits with Prophet")
     df_prophet = pd.read_sql("SELECT datetime, building_permits FROM market_data_monthly WHERE building_permits IS NOT NULL ORDER BY datetime", conn)
     df_prophet = df_prophet.rename(columns={"datetime": "ds", "building_permits": "y"})
 
@@ -119,13 +144,8 @@ if Prophet:
     future = m.make_future_dataframe(periods=3, freq="M")
     forecast = m.predict(future)
 
-    # Keep only the main forecast plot
     fig_prophet = plot_plotly(m, forecast)
     st.plotly_chart(fig_prophet, use_container_width=True)
-
-    # Show next month forecast as a card
-    next_forecast = forecast[['ds', 'yhat']].iloc[-1]
-    st.metric("📊 Predicted Building Permits (Next Month)", f"{int(next_forecast['yhat']):,}", delta_color="normal")
 else:
     st.warning("Prophet library not installed. Forecasting feature unavailable.")
 
@@ -161,8 +181,7 @@ with st.expander("📄 Show Year-over-Year Growth SQL Query"):
 st.markdown("---")
 st.header("📋 Quarterly Market Data Table")
 df_quarterly = pd.read_sql("SELECT * FROM market_data_quarterly ORDER BY datetime DESC", conn)
-df_quarterly['datetime'] = pd.to_datetime(df_quarterly['datetime'])  # Fix for string datetime
-
+df_quarterly['datetime'] = pd.to_datetime(df_quarterly['datetime'])
 df_quarterly['quarter_label'] = df_quarterly['datetime'].apply(lambda d: f"{d.year} Q{(d.month-1)//3 + 1}")
 df_quarterly_display = df_quarterly[['quarter_label', 'building_permits', 'construction_output', 'price_to_rent_ratio', 'residential_prices']]
 st.dataframe(df_quarterly_display, use_container_width=True)
