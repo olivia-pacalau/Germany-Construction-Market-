@@ -56,9 +56,9 @@ with st.sidebar:
 # ----------------- MAIN CONTENT -----------------
 st.markdown("""
 <div style='text-align: center;'>
-    <h1>🏗️ Construction Market Analysis</h1>
-    <h3>🇩🇪 Germany</h3>
-    <p><a href='https://tradingeconomics.com/' target='_blank'>Data Source: TradingEconomics.com</a></p>
+    <h1 style='margin-bottom: 0;'>🏗️ Construction Market Analysis</h1>
+    <h3 style='margin-top: 0;'>🇩🇪 Germany</h3>
+    <p style='font-size: 16px'><a href='https://tradingeconomics.com/' target='_blank'>Data Source: TradingEconomics.com</a></p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -81,12 +81,12 @@ change_output = calc_change("construction_output")
 st.markdown("""
 <div style='display: flex; justify-content: space-around; margin-bottom: 20px;'>
     <div style='border: 1px solid #ccc; border-radius: 8px; padding: 10px; width: 22%; text-align: center;'>
-        <h4>Building Permits – % Change from Last Month</h4>
-        <p style='color: {color1}; font-size: 24px;'><strong>{change_building:+.2f}%</strong></p>
+        <h5 style='margin-bottom: 6px;'>Building Permits – % Change from Last Month</h5>
+        <p style='color: {color1}; font-size: 20px;'><strong>{change_building:+.2f}%</strong></p>
     </div>
     <div style='border: 1px solid #ccc; border-radius: 8px; padding: 10px; width: 22%; text-align: center;'>
-        <h4>Construction Output – % Change from Last Month</h4>
-        <p style='color: {color2}; font-size: 24px;'><strong>{change_output:+.2f}%</strong></p>
+        <h5 style='margin-bottom: 6px;'>Construction Output – % Change from Last Month</h5>
+        <p style='color: {color2}; font-size: 20px;'><strong>{change_output:+.2f}%</strong></p>
     </div>
 </div>
 """.format(
@@ -123,10 +123,11 @@ st.markdown("---")
 st.subheader("📈 Building Permits Forecast")
 
 # Display forecast cards
-df_quarter = pd.read_sql("SELECT * FROM market_data_quarterly ORDER BY datetime DESC LIMIT 1", conn)
+df_quarter = pd.read_sql("SELECT * FROM market_data_quarterly WHERE building_permits IS NOT NULL AND residential_prices IS NOT NULL ORDER BY datetime DESC LIMIT 1", conn)
+
 actual_permits = int(df_quarter['building_permits'].values[0])
 res_price = df_quarter['residential_prices'].values[0]
-predicted_permits = int(0.5 * res_price + 5000)  # Example dummy formula for prediction
+predicted_permits = int(0.5 * float(res_price) + 5000) if pd.notna(res_price) else 0
 
 colf1, colf2 = st.columns(2)
 with colf1:
