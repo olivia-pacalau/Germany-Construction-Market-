@@ -118,8 +118,50 @@ if Prophet:
     future = m.make_future_dataframe(periods=3, freq="M")
     forecast = m.predict(future)
 
-    st.plotly_chart(plot_plotly(m, forecast), use_container_width=True)
+    # Keep only the main forecast plot
+    fig_prophet = plot_plotly(m, forecast)
+    st.plotly_chart(fig_prophet, use_container_width=True)
+
+    # Show next month forecast as a card
+    next_forecast = forecast[['ds', 'yhat']].iloc[-1]
+    st.metric("📊 Predicted Building Permits (Next Month)", f"{int(next_forecast['yhat']):,}", delta_color="normal")
 else:
     st.warning("Prophet library not installed. Forecasting feature unavailable.")
+
+# SQL Query Viewer Section
+st.markdown("---")
+st.header("🧠 SQL Growth Queries")
+with st.expander("📄 Show Year-over-Year Growth SQL Query"):
+    query_yoy = """
+    WITH yearly AS (
+        SELECT
+            CAST(STRFTIME('%Y', datetime) AS INTEGER) AS year,
+            building_permits,
+            residential_prices,
+            price_to_rent_ratio,
+            construction_output
+        FROM market_data_yearly
+    ),
+    yoy AS (
+        SELECT
+            curr.year,
+            ROUND(curr.building_permits, 2) AS current_permits,
+            ROUND(prev.building_permits, 2) AS previous_permits,
+            ROUND((curr.building_permits - prev.building_permits) * 100.0 / prev.building_permits, 2) AS permits_yoy_pct
+        FROM yearly curr
+        JOIN yearly prev ON curr.year = prev.year + 1
+    )
+    SELECT * FROM yoy
+    ORDER BY year;
+    """
+    st.code(query_yoy, language="sql")
+
+# Table View of Market Data Quarterly
+st.markdown("---")
+st.header("📋 Quarterly Market Data Table")
+df_quarterly = pd.read_sql("SELECT * FROM market_data_quarterly ORDER BY datetime DESC", conn)
+df_quarterly['quarter_label'] = df_quarterly['datetime'].apply(lambda d: f"{d.year} Q{(d.month-1)//3 + 1}")
+df_quarterly_display = df_quarterly[['quarter_label', 'building_permits', 'construction_output', 'price_to_rent_ratio', 'residential_prices']]
+st.dataframe(df_quarterly_display, use_container_width=True)
 
 conn.close()
