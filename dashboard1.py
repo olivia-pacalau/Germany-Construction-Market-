@@ -191,3 +191,35 @@ df_quarterly_display = df_quarterly[['quarter_label', 'building_permits', 'const
 st.dataframe(df_quarterly_display, use_container_width=True)
 
 conn.close()
+
+# Load YoY data
+with sqlite3.connect("market_data.db") as conn:
+    df_yoy = pd.read_sql("SELECT * FROM market_data_yoy", conn)
+
+# Melt for visualization
+df_yoy_melt = df_yoy.melt(id_vars="year", 
+                          value_vars=["permits_yoy_pct", "prices_yoy_pct", "ratio_yoy_pct", "output_yoy_pct"],
+                          var_name="Metric", value_name="YoY Growth (%)")
+
+# Clean names
+df_yoy_melt["Metric"] = df_yoy_melt["Metric"].replace({
+    "permits_yoy_pct": "Building Permits",
+    "prices_yoy_pct": "Residential Prices",
+    "ratio_yoy_pct": "Price-to-Rent Ratio",
+    "output_yoy_pct": "Construction Output"
+})
+
+# Bar chart
+st.markdown("### 📊 Year-over-Year Growth")
+fig_yoy = px.bar(df_yoy_melt, x="year", y="YoY Growth (%)", color="Metric", 
+                 barmode="group", text="YoY Growth (%)",
+                 color_discrete_sequence=px.colors.qualitative.Set2)
+
+fig_yoy.update_traces(textposition="outside")
+fig_yoy.update_layout(yaxis_tickformat=".2f", xaxis_title="Year", yaxis_title="% Change")
+st.plotly_chart(fig_yoy, use_container_width=True)
+
+# Optional: Display table
+with st.expander("🔍 View Raw Data Table"):
+    st.dataframe(df_yoy, use_container_width=True)
+
