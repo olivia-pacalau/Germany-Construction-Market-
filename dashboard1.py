@@ -4,6 +4,16 @@ import sqlite3
 import pandas as pd
 import plotly.express as px
 
+# Must be the first Streamlit command
+st.set_page_config(layout="wide")
+
+# Optional: Prophet forecast
+try:
+    from prophet import Prophet
+    from prophet.plot import plot_plotly
+except ImportError:
+    Prophet = None
+
 # Your n8n production webhook URL
 N8N_WEBHOOK_URL = "https://f089-62-250-42-200.ngrok-free.app/webhook/f189b9b1-314e-4bbc-a8e4-105912501679"
 
@@ -44,7 +54,6 @@ with st.sidebar:
 
 
 # ----------------- MAIN CONTENT -----------------
-st.set_page_config(layout="wide")
 st.title("\U0001F3D7️ Construction Market Analysis")
 
 # Connect to database
