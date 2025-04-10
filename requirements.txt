@@ -4,3 +4,4 @@ prophet
 plotly
 requests
 seaborn
+scikit-learn
