@@ -106,4 +106,20 @@ with st.container(border=True):
     fig.update_traces(mode='lines+markers')
     st.plotly_chart(fig, use_container_width=True)
 
+# Prophet Forecast section
+if Prophet:
+    st.markdown("---")
+    st.header("📈 Forecast Building Permits with Prophet")
+    df_prophet = pd.read_sql("SELECT datetime, building_permits FROM market_data_monthly WHERE building_permits IS NOT NULL ORDER BY datetime", conn)
+    df_prophet = df_prophet.rename(columns={"datetime": "ds", "building_permits": "y"})
+
+    m = Prophet()
+    m.fit(df_prophet)
+    future = m.make_future_dataframe(periods=3, freq="M")
+    forecast = m.predict(future)
+
+    st.plotly_chart(plot_plotly(m, forecast), use_container_width=True)
+else:
+    st.warning("Prophet library not installed. Forecasting feature unavailable.")
+
 conn.close()
