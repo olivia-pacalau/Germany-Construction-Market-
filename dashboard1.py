@@ -1,118 +1,81 @@
-# imports
-import pandas as pd
-import os
+import streamlit as st
 import sqlite3
-import numpy as np
-from sklearn.linear_model import LinearRegression
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import r2_score, mean_squared_error
-from functools import reduce
+import pandas as pd
+import plotly.express as px
 
-# preprocessing
-data_files = {
-    "building_permits": "/Users/olivia.pacalau/Desktop/ZehnderAssignment/GERMANYBUIPER.csv",
-    "price_to_rent": "/Users/olivia.pacalau/Desktop/ZehnderAssignment/BDPRR.csv",
-    "construction_output": "/Users/olivia.pacalau/Desktop/ZehnderAssignment/GermanyConOut.csv",
-    "residential_prices": "/Users/olivia.pacalau/Desktop/ZehnderAssignment/BDRPP.csv"
-}
-
-def load_and_clean_data(file_path):
-    df = pd.read_csv(file_path)
-    if df.columns[0] == df.iloc[0, 0]:
-        df.columns = df.iloc[0]
-        df = df.drop(index=0)
-    df.columns = [str(col).strip().lower().replace(" ", "_") for col in df.columns]
-    for col in ['datetime', 'lastupdate']:
-        if col in df.columns:
-            df[col] = pd.to_datetime(df[col], errors='coerce')
-    return df
-
-# Load all data
-data = {name: load_and_clean_data(path) for name, path in data_files.items()}
-
-# Create SQLite database
+# Initial settings
+st.set_page_config(layout="wide")
 conn = sqlite3.connect("market_data.db")
 
-# Monthly Table
-bp = data["building_permits"][["datetime", "value"]].rename(columns={"value": "building_permits"})
-co = data["construction_output"]["datetime", "value"].rename(columns={"value": "construction_output"})
+# --- 1. TITLE & INTRO ---
+st.markdown("<h1 style='text-align: center;'>🏗️ German Construction Market Dashboard</h1>", unsafe_allow_html=True)
+st.markdown("<h4 style='text-align: center;'>🇩🇪 For Zehnder Group | [Data Source](https://tradingeconomics.com/)</h4>", unsafe_allow_html=True)
 
-unified_monthly = pd.merge(bp, co, on="datetime", how="outer")
-unified_monthly = unified_monthly.sort_values("datetime").reset_index(drop=True)
-unified_monthly['quarter'] = unified_monthly['datetime'].dt.to_period('Q').astype(str)
-unified_monthly.to_sql("market_data_monthly", conn, index=False, if_exists="replace")
+st.markdown("")
 
-# Quarterly Unified Table
-monthly_data = ['building_permits', 'construction_output']
-data_quarterly = {}
+# --- 2. HIGH LEVEL INSIGHT ---
+st.subheader("📊 Market Summary")
+with st.container(border=True):
+    st.write("Based on the latest data, the construction market appears to be **cooling down slightly**, with fewer permits issued compared to last quarter, and rising residential prices. Forecasts suggest a moderate decline next quarter.")
 
-for name, df in data.items():
-    if name in monthly_data:
-        df = df.set_index('datetime')
-        df_num = df.select_dtypes(include='number').resample('Q').mean().round(2)
-        df_meta = df.select_dtypes(exclude='number').resample('Q').last()
-        df_q = pd.concat([df_num, df_meta], axis=1).reset_index()
-        df_q['quarter'] = df_q['datetime'].dt.to_period('Q').astype(str)
-        data_quarterly[name] = df_q
-    else:
-        df_q = df.copy()
-        df_q['quarter'] = df_q['datetime'].dt.to_period('Q').astype(str)
-        data_quarterly[name] = df_q
+# --- 3. KPI CARDS WITH TRENDS (QoQ or YoY only) ---
+df_qoq = pd.read_sql("SELECT * FROM market_data_qoq ORDER BY datetime DESC LIMIT 1", conn)
+change_building = df_qoq["permits_qoq_pct"].values[0]
+change_output = df_qoq["output_qoq_pct"].values[0]
 
-bp = data_quarterly["building_permits"][["datetime", "value"]].rename(columns={"value": "building_permits"})
-pr = data_quarterly["price_to_rent"][["datetime", "value"]].rename(columns={"value": "price_to_rent_ratio"})
-co = data_quarterly["construction_output"]["datetime", "value"].rename(columns={"value": "construction_output"})
-rp = data_quarterly["residential_prices"]["datetime", "value"].rename(columns={"value": "residential_prices"})
+col1, col2 = st.columns(2)
+with col1:
+    st.metric("🏠 Building Permits (QoQ)", f"{change_building:+.2f}%", delta_color="inverse")
+with col2:
+    st.metric("⚙️ Construction Output (QoQ)", f"{change_output:+.2f}%", delta_color="inverse")
 
-unified_quarterly = reduce(lambda l, r: pd.merge(l, r, on="datetime", how="outer"), [bp, pr, co, rp])
-unified_quarterly = unified_quarterly.sort_values("datetime").reset_index(drop=True)
-unified_quarterly['quarter'] = unified_quarterly['datetime'].dt.to_period('Q').astype(str)
-unified_quarterly.to_sql("market_data_quarterly", conn, index=False, if_exists="replace")
+st.markdown("---")
 
-# Yearly Unified Table
-data_yearly = {}
-for name, df in data_quarterly.items():
-    df = df.set_index('datetime')
-    df_num = df.select_dtypes(include='number').resample('Y').mean().round(2)
-    df_meta = df.select_dtypes(exclude='number').resample('Y').last()
-    df_y = pd.concat([df_num, df_meta], axis=1).reset_index()
-    df_y['year'] = df_y['datetime'].dt.year
-    data_yearly[name] = df_y
+# --- 4. FORECAST SECTION ---
+st.subheader("🔮 Building Permits Forecast")
 
-bp_y = data_yearly["building_permits"][["datetime", "value"]].rename(columns={"value": "building_permits"})
-pr_y = data_yearly["price_to_rent"][["datetime", "value"]].rename(columns={"value": "price_to_rent_ratio"})
-co_y = data_yearly["construction_output"]["datetime", "value"].rename(columns={"value": "construction_output"})
-rp_y = data_yearly["residential_prices"]["datetime", "value"].rename(columns={"value": "residential_prices"})
+df_pred = pd.read_sql("SELECT * FROM building_permit_predictions ORDER BY current_quarter DESC LIMIT 1", conn)
+actual = int(df_pred["actual_permits"].values[0])
+predicted = int(df_pred["predicted_permits"].values[0])
 
-unified_yearly = reduce(lambda l, r: pd.merge(l, r, on="datetime", how="outer"), [bp_y, pr_y, co_y, rp_y])
-unified_yearly = unified_yearly.sort_values("datetime").reset_index(drop=True)
-unified_yearly['year'] = unified_yearly['datetime'].dt.year
-unified_yearly.to_sql("market_data_yearly", conn, index=False, if_exists="replace")
+colf1, colf2 = st.columns(2)
+with colf1:
+    st.metric("This Quarter's Permits", f"{actual:,}")
+with colf2:
+    st.metric("Predicted Next Quarter", f"{predicted:,}", delta=f"{predicted - actual:+,}")
 
-# Linear Regression + Predictions
-df_lr = unified_quarterly.dropna().copy()
-df_lr['target'] = df_lr['building_permits'].shift(-1)
-df_lr = df_lr.dropna()
+st.markdown("---")
 
-X = df_lr[['residential_prices']]
-y = df_lr['target']
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-lr = LinearRegression().fit(X_train, y_train)
+# --- 5. MAIN KPI EXPLORER (IN BORDER) ---
+with st.container(border=True):
+    st.subheader("📈 KPI Explorer")
+    
+    colg1, colg2 = st.columns([1, 2])
+    with colg1:
+        granularity = st.radio("Granularity", ["Quarterly", "Yearly"], horizontal=True)
+    with colg2:
+        table = "market_data_quarterly" if granularity == "Quarterly" else "market_data_yearly"
+        df = pd.read_sql(f"SELECT * FROM {table}", conn)
+        kpis = [c for c in df.columns if c not in ['datetime', 'quarter', 'year']]
+        kpi = st.selectbox("Select KPI", kpis)
 
-latest = unified_quarterly.dropna().iloc[-1]
-latest_date = latest['datetime']
-latest_price = latest['residential_prices']
-predicted_permits = int(lr.predict([[latest_price]])[0])
-actual_permits = int(latest['building_permits'])
+    fig = px.line(df, x="datetime", y=kpi, title=kpi.replace("_", " ").title())
+    st.plotly_chart(fig, use_container_width=True)
 
-predictions_df = pd.DataFrame([{
-    "current_quarter": latest_date,
-    "residential_price": latest_price,
-    "predicted_permits": predicted_permits,
-    "actual_permits": actual_permits
-}])
+# --- 6. MOVING AVERAGE SECTION ---
+st.subheader("📊 Monthly Moving Average – Construction Output")
 
-predictions_df.to_sql("building_permit_predictions", conn, index=False, if_exists="replace")
+df_avg = pd.read_sql("SELECT * FROM market_data_m_avg", conn)
+fig_avg = px.line(df_avg, x="date", y=["current_output", "output_3mo_avg"], 
+                  labels={"value": "Construction Output"}, 
+                  title="Construction Output vs 3-Month Moving Average")
+st.plotly_chart(fig_avg, use_container_width=True)
 
-print("🎯 Zehnder-ready database generated with insights and forecasts.")
+# --- 7. OPTIONAL RAW TABLE ---
+with st.expander("📋 View Raw Quarterly Market Data"):
+    df_view = pd.read_sql("SELECT * FROM market_data_quarterly", conn)
+    df_view['quarter_label'] = pd.to_datetime(df_view['datetime']).dt.to_period('Q').astype(str)
+    df_display = df_view[["quarter_label", "building_permits", "construction_output", "residential_prices", "price_to_rent_ratio"]]
+    st.dataframe(df_display, use_container_width=True)
+
 conn.close()
