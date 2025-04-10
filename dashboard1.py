@@ -55,38 +55,34 @@ with st.sidebar:
 
 # ----------------- MAIN CONTENT -----------------
 st.title("\U0001F3D7️ Construction Market Analysis")
+st.caption("Germany")
+st.markdown("[Data Source: TradingEconomics.com](https://tradingeconomics.com/)")
 
 # Connect to database
 conn = sqlite3.connect("market_data.db")
 
-# Load latest two months of data from monthly table for percent change cards
-df_monthly = pd.read_sql("SELECT * FROM market_data_monthly ORDER BY datetime DESC LIMIT 2", conn)
+# Load latest two quarters of data for percent change cards
+df_quarterly = pd.read_sql("SELECT * FROM market_data_quarterly ORDER BY datetime DESC LIMIT 2", conn)
 
 # Calculate percent changes
 def calc_change(col):
-    if len(df_monthly) < 2 or pd.isna(df_monthly[col].iloc[1]) or pd.isna(df_monthly[col].iloc[0]):
+    if len(df_quarterly) < 2 or pd.isna(df_quarterly[col].iloc[1]) or pd.isna(df_quarterly[col].iloc[0]):
         return None
-    return round(((df_monthly[col].iloc[0] - df_monthly[col].iloc[1]) / df_monthly[col].iloc[1]) * 100, 2)
+    return round(((df_quarterly[col].iloc[0] - df_quarterly[col].iloc[1]) / df_quarterly[col].iloc[1]) * 100, 2)
 
 change_building = calc_change("building_permits")
 change_output = calc_change("construction_output")
-change_price = calc_change("residential_prices") if "residential_prices" in df_monthly.columns else None
-change_ratio = calc_change("price_to_rent_ratio") if "price_to_rent_ratio" in df_monthly.columns else None
 
 # Display KPI cards in columns
-col1, col2, col3, col4 = st.columns(4)
+col1, col2 = st.columns(2)
 
 with col1:
-    st.metric("Building Permits – % Change from Last Month", f"{change_building:+.2f}%" if change_building is not None else "N/A", delta_color="inverse")
+    delta = f"{change_building:+.2f}%" if change_building is not None else "N/A"
+    st.metric("Building Permits – % Change from Last Quarter", delta, delta_color="normal")
 
 with col2:
-    st.metric("Construction Output – % Change from Last Month", f"{change_output:+.2f}%" if change_output is not None else "N/A", delta_color="inverse")
-
-with col3:
-    st.metric("Residential Prices – % Change from Last Month", f"{change_price:+.2f}%" if change_price is not None else "N/A", delta_color="inverse")
-
-with col4:
-    st.metric("Price-to-Rent Ratio – % Change from Last Month", f"{change_ratio:+.2f}%" if change_ratio is not None else "N/A", delta_color="inverse")
+    delta = f"{change_output:+.2f}%" if change_output is not None else "N/A"
+    st.metric("Construction Output – % Change from Last Quarter", delta, delta_color="normal")
 
 # User selection for granularity
 granularity = st.radio("Select data granularity:", ["Quarterly", "Yearly"], horizontal=True)
