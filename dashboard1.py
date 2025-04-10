@@ -94,6 +94,7 @@ with st.container(border=True):
     # Load appropriate table
     table = "market_data_quarterly" if granularity == "Quarterly" else "market_data_yearly"
     df = pd.read_sql(f"SELECT * FROM {table}", conn)
+    df['datetime'] = pd.to_datetime(df['datetime'])  # Ensure datetime is proper type
 
     with col_select2:
         kpi_options = [col for col in df.columns if col not in ["datetime", "year", "quarter"]]
@@ -160,6 +161,8 @@ with st.expander("📄 Show Year-over-Year Growth SQL Query"):
 st.markdown("---")
 st.header("📋 Quarterly Market Data Table")
 df_quarterly = pd.read_sql("SELECT * FROM market_data_quarterly ORDER BY datetime DESC", conn)
+df_quarterly['datetime'] = pd.to_datetime(df_quarterly['datetime'])  # Fix for string datetime
+
 df_quarterly['quarter_label'] = df_quarterly['datetime'].apply(lambda d: f"{d.year} Q{(d.month-1)//3 + 1}")
 df_quarterly_display = df_quarterly[['quarter_label', 'building_permits', 'construction_output', 'price_to_rent_ratio', 'residential_prices']]
 st.dataframe(df_quarterly_display, use_container_width=True)
