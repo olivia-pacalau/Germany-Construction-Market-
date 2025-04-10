@@ -118,22 +118,26 @@ with st.container(border=True):
     fig.update_traces(mode='lines+markers')
     st.plotly_chart(fig, use_container_width=True)
 
-# Forecast Section
-st.markdown("---")
-st.subheader("📈 Building Permits Forecast")
+# --- Building Permits Forecast Section ---
+st.markdown("### 📈 Building Permits Forecast")
 
-# Display forecast cards
-df_quarter = pd.read_sql("SELECT * FROM market_data_quarterly WHERE building_permits IS NOT NULL AND residential_prices IS NOT NULL ORDER BY datetime DESC LIMIT 1", conn)
+# Load prediction from database
+conn = sqlite3.connect("market_data.db")
+df_pred = pd.read_sql("SELECT * FROM building_permit_predictions ORDER BY current_quarter DESC LIMIT 1", conn)
+conn.close()
 
-actual_permits = int(df_quarter['building_permits'].values[0])
-res_price = df_quarter['residential_prices'].values[0]
-predicted_permits = int(0.5 * float(res_price) + 5000) if pd.notna(res_price) else 0
+if not df_pred.empty:
+    actual = int(df_pred["actual_permits"].values[0])
+    predicted = int(df_pred["predicted_permits"].values[0])
+    quarter_str = pd.to_datetime(df_pred["current_quarter"].values[0]).to_period("Q").strftime("Q%q %Y")
 
-colf1, colf2 = st.columns(2)
-with colf1:
-    st.metric("This Quarter's Building Permits", f"{actual_permits:,}")
-with colf2:
-    st.metric("Next Quarter Forecast (based on residential prices)", f"{predicted_permits:,}")
+    colf1, colf2 = st.columns(2)
+    with colf1:
+        st.metric(label=f"📌 {quarter_str} – Building Permits", value=f"{actual:,}")
+    with colf2:
+        st.metric(label=f"📌 Next Quarter – Predicted Permits", value=f"{predicted:,}")
+else:
+    st.warning("No predictions available yet.")
 
 # Prophet Forecast section
 if Prophet:
