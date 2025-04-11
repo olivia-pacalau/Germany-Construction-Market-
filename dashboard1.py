@@ -9,10 +9,10 @@ st.set_page_config(layout="wide")
 st.markdown("""
 <style>
     body {
-        background-color: #f5f5f5;
+        background-color: #c2c2c2;
     }
     .stApp {
-        background-color: #f5f5f5;
+        background-color: #c2c2c2;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -69,6 +69,7 @@ st.markdown("""
 conn = sqlite3.connect("market_data.db")
 # Visualization section
 with st.container(border=True):
+    st.subheader("Quarter-over-Quarter Changes")
     # Load quarterly data
     df_quarterly = pd.read_sql("SELECT * FROM market_data_quarterly ORDER BY datetime DESC", conn)
     df_quarterly['datetime'] = pd.to_datetime(df_quarterly['datetime'])
@@ -148,7 +149,7 @@ with st.container(border=True):
 
     with col_select2:
         kpi_options = [col for col in df.columns if col not in ["datetime", "year", "quarter"]]
-        kpi = st.selectbox("Select KPI to plot:", kpi_options)
+        kpi = st.selectbox("Select indicator to plot:", kpi_options)
 
     # Scatter plot
     st.subheader(f"{kpi.replace('_', ' ').title()} Over Time ({granularity})")
