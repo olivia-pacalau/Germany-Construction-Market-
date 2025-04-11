@@ -255,4 +255,53 @@ with st.expander("🔍 View Forecast Data"):
         mime="text/csv"
     )
 
-# ... (Rest of the code remains the same)
+# Load YoY data
+df_yoy = pd.read_sql("SELECT * FROM market_data_yoy", conn)
+
+# Melt for visualization
+df_yoy_melt = df_yoy.melt(id_vars="year", 
+                          value_vars=["permits_yoy_pct", "prices_yoy_pct", "ratio_yoy_pct", "output_yoy_pct"],
+                          var_name="Metric", value_name="YoY Growth (%)")
+
+# Clean names
+df_yoy_melt["Metric"] = df_yoy_melt["Metric"].replace({
+    "permits_yoy_pct": "Building Permits",
+    "prices_yoy_pct": "Residential Prices",
+    "ratio_yoy_pct": "Price-to-Rent Ratio",
+    "output_yoy_pct": "Construction Output"
+})
+
+# Bar chart
+st.markdown("### 📊 Year-over-Year Growth")
+fig_yoy = px.bar(df_yoy_melt, x="year", y="YoY Growth (%)", color="Metric", 
+                 barmode="group", text="YoY Growth (%)",
+                 color_discrete_sequence=px.colors.qualitative.Set2)
+
+fig_yoy.update_traces(textposition="outside")
+fig_yoy.update_layout(yaxis_tickformat=".2f", xaxis_title="Year", yaxis_title="% Change")
+st.plotly_chart(fig_yoy, use_container_width=True)
+
+# Optional: Display table with download button
+with st.expander("🔍 View Raw Data Table"):
+    st.dataframe(df_yoy, use_container_width=True)
+    st.download_button(
+        label="Download YoY Data",
+        data=df_yoy.to_csv(index=False),
+        file_name="yoy_growth_data.csv",
+        mime="text/csv"
+    )
+
+# Load moving average data
+df_ma = pd.read_sql("SELECT * FROM market_data_m_avg", conn)
+
+st.markdown("### 🧮 Construction Output – 3-Month Moving Average")
+fig_ma = px.line(df_ma, x="date", y=["current_output", "output_3mo_avg"],
+                 labels={"value": "Construction Output", "date": "Date"},
+                 title="Construction Output vs 3-Month Moving Average",
+                 color_discrete_map={"current_output": "#1f77b4", "output_3mo_avg": "#ff7f0e"})
+
+fig_ma.update_layout(legend_title_text="Legend")
+st.plotly_chart(fig_ma, use_container_width=True)
+
+# Close the database connection
+conn.close()
