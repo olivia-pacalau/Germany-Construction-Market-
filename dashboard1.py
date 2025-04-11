@@ -67,9 +67,7 @@ st.markdown("""
 
 # Connect to database
 conn = sqlite3.connect("market_data.db")
-# QoQ Changes section
-with st.container(border=True):
-    # QoQ Changes section
+#QoQ cards
 with st.container(border=True):
     st.subheader("Quarter-over-Quarter Changes")
     
