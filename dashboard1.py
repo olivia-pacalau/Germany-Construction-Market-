@@ -69,6 +69,8 @@ st.markdown("""
 conn = sqlite3.connect("market_data.db")
 # QoQ Changes section
 with st.container(border=True):
+    # QoQ Changes section
+with st.container(border=True):
     st.subheader("Quarter-over-Quarter Changes")
     
     # Load quarterly data
