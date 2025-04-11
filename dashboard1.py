@@ -6,13 +6,16 @@ import plotly.express as px
 
 # Must be the first Streamlit command
 st.set_page_config(layout="wide")
-
-# Optional: Prophet forecast
-try:
-    from prophet import Prophet
-    from prophet.plot import plot_plotly
-except ImportError:
-    Prophet = None
+st.markdown("""
+<style>
+    body {
+        background-color: #f5f5f5;
+    }
+    .stApp {
+        background-color: #f5f5f5;
+    }
+</style>
+""", unsafe_allow_html=True)
 
 # Your n8n production webhook URL
 N8N_WEBHOOK_URL = "https://f089-62-250-42-200.ngrok-free.app/webhook/f189b9b1-314e-4bbc-a8e4-105912501679"
@@ -69,32 +72,34 @@ conn = sqlite3.connect("market_data.db")
 df_monthly = pd.read_sql("SELECT * FROM market_data_monthly ORDER BY datetime DESC LIMIT 2", conn)
 
 # Calculate percent changes
-def calc_change(col):
-    if len(df_monthly) < 2 or pd.isna(df_monthly[col].iloc[1]) or pd.isna(df_monthly[col].iloc[0]):
+df_quarter = pd.read_sql("SELECT * FROM market_data_quarterly ORDER BY datetime DESC LIMIT 2", conn)
+
+# Calculate percentage change for each KPI
+def calc_qoq_change(col):
+    if len(df_quarter) < 2 or pd.isna(df_quarter[col].iloc[1]) or pd.isna(df_quarter[col].iloc[0]):
         return None
-    return round(((df_monthly[col].iloc[0] - df_monthly[col].iloc[1]) / df_monthly[col].iloc[1]) * 100, 2)
+    return round(((df_quarter[col].iloc[0] - df_quarter[col].iloc[1]) / df_quarter[col].iloc[1]) * 100, 2)
 
-change_building = calc_change("building_permits")
-change_output = calc_change("construction_output")
+change_building_qoq = calc_qoq_change("building_permits")
+change_output_qoq = calc_qoq_change("construction_output")
+change_price_qoq = calc_qoq_change("residential_prices")
+change_ratio_qoq = calc_qoq_change("price_to_rent_ratio")
 
-# KPI cards
-st.markdown("""
-<div style='display: flex; justify-content: space-around; margin-bottom: 20px;'>
-    <div style='border: 1px solid #ccc; border-radius: 8px; padding: 10px; width: 22%; text-align: center;'>
-        <h5 style='margin-bottom: 6px;'>Building Permits – % Change from Last Month</h5>
-        <p style='color: {color1}; font-size: 20px;'><strong>{change_building:+.2f}%</strong></p>
-    </div>
-    <div style='border: 1px solid #ccc; border-radius: 8px; padding: 10px; width: 22%; text-align: center;'>
-        <h5 style='margin-bottom: 6px;'>Construction Output – % Change from Last Month</h5>
-        <p style='color: {color2}; font-size: 20px;'><strong>{change_output:+.2f}%</strong></p>
-    </div>
-</div>
-""".format(
-    change_building=change_building if change_building is not None else 0.0,
-    change_output=change_output if change_output is not None else 0.0,
-    color1="green" if change_building and change_building >= 0 else "red",
-    color2="green" if change_output and change_output >= 0 else "red"
-), unsafe_allow_html=True)
+# Display 4 Streamlit metrics (no custom borders)
+col1, col2, col3, col4 = st.columns(4)
+
+with col1:
+    st.metric(label="Building Permits (QoQ)", value=f"{change_building_qoq:+.2f}%" if change_building_qoq is not None else "N/A")
+
+with col2:
+    st.metric(label="Construction Output (QoQ)", value=f"{change_output_qoq:+.2f}%" if change_output_qoq is not None else "N/A")
+
+with col3:
+    st.metric(label="Residential Prices (QoQ)", value=f"{change_price_qoq:+.2f}%" if change_price_qoq is not None else "N/A")
+
+with col4:
+    st.metric(label="Price-to-Rent Ratio (QoQ)", value=f"{change_ratio_qoq:+.2f}%" if change_ratio_qoq is not None else "N/A")
+
 
 # Visualization section
 with st.container(border=True):
@@ -235,5 +240,3 @@ fig_ma = px.line(df_ma, x="date", y=["current_output", "output_3mo_avg"],
 
 fig_ma.update_layout(legend_title_text="Legend")
 st.plotly_chart(fig_ma, use_container_width=True)
-
-
