@@ -219,7 +219,7 @@ st.markdown("---")
 with st.expander("🧠 SQL Growth Queries", expanded=False):
     st.header("SQL Growth Queries")
     with st.expander("📄 Show Year-over-Year Growth SQL Query"):
-        query_yoy = """
+        query_yoy = """"
         WITH yearly AS (
             SELECT
                 CAST(STRFTIME('%Y', datetime) AS INTEGER) AS year,
