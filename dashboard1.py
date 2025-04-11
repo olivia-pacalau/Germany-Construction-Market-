@@ -59,9 +59,9 @@ with st.sidebar:
 # ----------------- MAIN CONTENT -----------------
 st.markdown("""
 <div style='text-align: center;'>
-    <h1 style='margin-bottom: 0;'>🏗️ Construction Market Analysis</h1>
+    <h1 style='margin-bottom: 0;'>Construction Market Analytics</h1>
     <h3 style='margin-top: 0;'>🇩🇪 Germany</h3>
-    <p style='font-size: 16px'><a href='https://tradingeconomics.com/' target='_blank'>Data Source: TradingEconomics.com</a></p>
+    <p style='font-size: 14px'><a href='https://tradingeconomics.com/' target='_blank'>Data Source: TradingEconomics.com</a></p>
 </div>
 """, unsafe_allow_html=True)
 
