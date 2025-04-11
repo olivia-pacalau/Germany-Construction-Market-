@@ -69,62 +69,73 @@ st.markdown("""
 conn = sqlite3.connect("market_data.db")
 # Visualization section
 with st.container(border=True):
-    # Load quarterly data to calculate QoQ changes
-    df_qoq = pd.read_sql("SELECT * FROM market_data_quarterly ORDER BY datetime DESC LIMIT 2", conn)
-    df_qoq['datetime'] = pd.to_datetime(df_qoq['datetime'])
-    df_qoq = df_qoq.sort_values('datetime')  # Ensure chronological order
+    # Load quarterly data
+    df_quarterly = pd.read_sql("SELECT * FROM market_data_quarterly ORDER BY datetime DESC", conn)
+    df_quarterly['datetime'] = pd.to_datetime(df_quarterly['datetime'])
 
-    # Calculate QoQ percentage changes
-    if len(df_qoq) == 2:
-        latest = df_qoq.iloc[-1]
-        previous = df_qoq.iloc[-2]
-        metrics = {
-            'Building Permits': 'building_permits',
-            'Construction Output': 'construction_output',
-            'Price-to-Rent Ratio': 'price_to_rent_ratio',
-            'Residential Prices': 'residential_prices'
-        }
-        qoq_changes = {}
-        for display_name, col in metrics.items():
-            if pd.notnull(latest[col]) and pd.notnull(previous[col]) and previous[col] != 0:
+    # Calculate QoQ percentage changes for each feature
+    metrics = {
+        'Building Permits': 'building_permits',
+        'Construction Output': 'construction_output',
+        'Price-to-Rent Ratio': 'price_to_rent_ratio',
+        'Residential Prices': 'residential_prices'
+    }
+    qoq_changes = {}
+    quarters_compared = {}
+
+    for display_name, col in metrics.items():
+        # Filter non-null values for this feature
+        df_feature = df_quarterly[['datetime', col]].dropna(subset=[col]).sort_values('datetime', ascending=False)
+        
+        if len(df_feature) >= 2:
+            # Take the two most recent quarters
+            latest = df_feature.iloc[0]
+            previous = df_feature.iloc[1]
+            if previous[col] != 0:  # Avoid division by zero
                 change = ((latest[col] - previous[col]) / previous[col]) * 100
                 qoq_changes[display_name] = round(change, 2)
+                # Get quarter labels (e.g., "2024Q3")
+                latest_quarter = latest['datetime'].to_period('Q').strftime('%YQ%q')
+                prev_quarter = previous['datetime'].to_period('Q').strftime('%YQ%q')
+                quarters_compared[display_name] = f"{latest_quarter} vs {prev_quarter}"
             else:
                 qoq_changes[display_name] = None
+                quarters_compared[display_name] = "N/A"
+        else:
+            qoq_changes[display_name] = None
+            quarters_compared[display_name] = "N/A"
 
-        # Display QoQ cards
-        st.subheader("Quarter-over-Quarter Changes")
-        cols = st.columns(4)
-        for idx, (display_name, change) in enumerate(qoq_changes.items()):
-            with cols[idx]:
-                if change is not None:
-                    color = "green" if change >= 0 else "red"
-                    sign = "+" if change >= 0 else ""
-                    st.markdown(
-                        f"""
-                        <div style='text-align: center; padding: 10px; border: 1px solid #ddd; border-radius: 5px;'>
-                            <h4 style='margin: 0;'>{display_name}</h4>
-                            <p style='color: {color}; font-size: 18px; margin: 5px 0;'>{sign}{change}%</p>
-                        </div>
-                        """,
-                        unsafe_allow_html=True
-                    )
-                else:
-                    st.markdown(
-                        f"""
-                        <div style='text-align: center; padding: 10px; border: 1px solid #ddd; border-radius: 5px;'>
-                            <h4 style='margin: 0;'>{display_name}</h4>
-                            <p style='color: #888; font-size: 18px; margin: 5px 0;'>N/A</p>
-                        </div>
-                        """,
-                        unsafe_allow_html=True
-                    )
+    # Display QoQ cards
+    st.subheader("Quarter-over-Quarter Changes")
+    cols = st.columns(4)
+    for idx, (display_name, change) in enumerate(qoq_changes.items()):
+        with cols[idx]:
+            if change is not None:
+                color = "green" if change >= 0 else "red"
+                sign = "+" if change >= 0 else ""
+                st.markdown(
+                    f"""
+                    <div style='text-align: center; padding: 10px; border: 1px solid #ddd; border-radius: 5px;'>
+                        <h4 style='margin: 0;'>{display_name}</h4>
+                        <p style='color: {color}; font-size: 18px; margin: 5px 0;'>{sign}{change}%</p>
+                        <p style='color: #888; font-size: 12px; margin: 0;'>{quarters_compared[display_name]}</p>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+            else:
+                st.markdown(
+                    f"""
+                    <div style='text-align: center; padding: 10px; border: 1px solid #ddd; border-radius: 5px;'>
+                        <h4 style='margin: 0;'>{display_name}</h4>
+                        <p style='color: #888; font-size: 18px; margin: 5px 0;'>N/A</p>
+                        <p style='color: #888; font-size: 12px; margin: 0;'>{quarters_compared[display_name]}</p>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
 
-    else:
-        st.warning("Not enough data to calculate QoQ changes.")
-
-# Visualization section
-with st.container(border=True):
+    # Existing controls for granularity and KPI selection
     col_select1, col_select2 = st.columns([1, 2])
 
     with col_select1:
@@ -139,8 +150,9 @@ with st.container(border=True):
         kpi_options = [col for col in df.columns if col not in ["datetime", "year", "quarter"]]
         kpi = st.selectbox("Select KPI to plot:", kpi_options)
 
+    # Scatter plot
     st.subheader(f"{kpi.replace('_', ' ').title()} Over Time ({granularity})")
-    fig = px.scatter(df, x="datetime", y=kpi, title=f"{kpi.replace('_', ' ').title()} Over Time", 
+    fig = px.scatter(df, x="datetime", y=kpi, title=f"{kpi.replace('_', ' ').title()} Over Time",
                      labels={"datetime": "Date", kpi: kpi.replace('_', ' ').title()}, color_discrete_sequence=["#008080"])
     fig.update_traces(mode='lines+markers')
     st.plotly_chart(fig, use_container_width=True)
