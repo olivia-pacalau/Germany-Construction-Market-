@@ -3,6 +3,8 @@ import requests
 import sqlite3
 import pandas as pd
 import plotly.express as px
+from prophet import Prophet
+from prophet.plot import plot_plotly
 
 # Must be the first Streamlit command
 st.set_page_config(layout="wide")
@@ -55,7 +57,6 @@ with st.sidebar:
                 st.write(assistant_response)
                 st.session_state.messages.append({"role": "assistant", "content": assistant_response})
 
-
 # ----------------- MAIN CONTENT -----------------
 st.markdown("""
 <div style='text-align: center;'>
@@ -67,7 +68,8 @@ st.markdown("""
 
 # Connect to database
 conn = sqlite3.connect("market_data.db")
-# Visualization section
+
+# Visualization section (QoQ cards)
 with st.container(border=True):
     st.subheader("Quarter-over-Quarter Changes")
     # Load quarterly data
@@ -134,7 +136,7 @@ with st.container(border=True):
                     """,
                     unsafe_allow_html=True
                 )
-                
+
 # Scatter Plot section
 with st.container(border=True):
     # Existing controls for granularity and KPI selection
@@ -171,12 +173,15 @@ with st.container(border=True):
                      labels={"datetime": "Date", kpi: kpi.replace('_', ' ').title()}, color_discrete_sequence=["#008080"])
     fig.update_traces(mode='lines+markers')
     st.plotly_chart(fig, use_container_width=True)
-    
+
+    # Add expander for raw data
+    with st.expander("🔍 View Raw Data Table"):
+        st.dataframe(df, use_container_width=True)
+
 # --- Building Permits Forecast Section ---
 st.markdown("### 📈 Building Permits Forecast")
 
 # Load prediction from database
-conn = sqlite3.connect("market_data.db")
 df_pred = pd.read_sql("SELECT * FROM building_permit_predictions ORDER BY current_quarter DESC LIMIT 1", conn)
 
 if not df_pred.empty:
@@ -193,19 +198,31 @@ else:
     st.warning("No predictions available yet.")
 
 # Prophet Forecast section
-# if Prophet:
-#     df_prophet = pd.read_sql("SELECT datetime, building_permits FROM market_data_monthly WHERE building_permits IS NOT NULL ORDER BY datetime", conn)
-#     df_prophet = df_prophet.rename(columns={"datetime": "ds", "building_permits": "y"})
+st.markdown("### 📅 Building Permits Forecast (Prophet)")
+df_prophet = pd.read_sql("SELECT datetime, building_permits FROM market_data_monthly WHERE building_permits IS NOT NULL ORDER BY datetime", conn)
+df_prophet = df_prophet.rename(columns={"datetime": "ds", "building_permits": "y"})
+df_prophet['ds'] = pd.to_datetime(df_prophet['ds'])
 
-#     m = Prophet()
-#     m.fit(df_prophet)
-#     future = m.make_future_dataframe(periods=3, freq="M")
-#     forecast = m.predict(future)
+# Fit Prophet model
+m = Prophet()
+m.fit(df_prophet)
 
-#     fig_prophet = plot_plotly(m, forecast)
-#     st.plotly_chart(fig_prophet, use_container_width=True)
-# else:
-#     st.warning("Prophet library not installed. Forecasting feature unavailable.")
+# Create future dataframe for 6 months and 1 year
+future_6m = m.make_future_dataframe(periods=6, freq="M")
+future_1y = m.make_future_dataframe(periods=12, freq="M")
+
+# Predict
+forecast_6m = m.predict(future_6m)
+forecast_1y = m.predict(future_1y)
+
+# Plot both forecasts
+st.subheader("6-Month Forecast")
+fig_6m = plot_plotly(m, forecast_6m)
+st.plotly_chart(fig_6m, use_container_width=True)
+
+st.subheader("1-Year Forecast")
+fig_1y = plot_plotly(m, forecast_1y)
+st.plotly_chart(fig_1y, use_container_width=True)
 
 # SQL Query Viewer Section
 st.markdown("---")
@@ -244,11 +261,8 @@ df_quarterly['quarter_label'] = df_quarterly['datetime'].apply(lambda d: f"{d.ye
 df_quarterly_display = df_quarterly[['quarter_label', 'building_permits', 'construction_output', 'price_to_rent_ratio', 'residential_prices']]
 st.dataframe(df_quarterly_display, use_container_width=True)
 
-conn.close()
-
 # Load YoY data
-with sqlite3.connect("market_data.db") as conn:
-    df_yoy = pd.read_sql("SELECT * FROM market_data_yoy", conn)
+df_yoy = pd.read_sql("SELECT * FROM market_data_yoy", conn)
 
 # Melt for visualization
 df_yoy_melt = df_yoy.melt(id_vars="year", 
@@ -278,8 +292,7 @@ with st.expander("🔍 View Raw Data Table"):
     st.dataframe(df_yoy, use_container_width=True)
 
 # Load moving average data
-with sqlite3.connect("market_data.db") as conn:
-    df_ma = pd.read_sql("SELECT * FROM market_data_m_avg", conn)
+df_ma = pd.read_sql("SELECT * FROM market_data_m_avg", conn)
 
 st.markdown("### 🧮 Construction Output – 3-Month Moving Average")
 fig_ma = px.line(df_ma, x="date", y=["current_output", "output_3mo_avg"],
@@ -289,3 +302,6 @@ fig_ma = px.line(df_ma, x="date", y=["current_output", "output_3mo_avg"],
 
 fig_ma.update_layout(legend_title_text="Legend")
 st.plotly_chart(fig_ma, use_container_width=True)
+
+# Close the database connection
+conn.close()
