@@ -6,13 +6,16 @@ import plotly.express as px
 
 # Must be the first Streamlit command
 st.set_page_config(layout="wide")
-
-# Optional: Prophet forecast
-try:
-    from prophet import Prophet
-    from prophet.plot import plot_plotly
-except ImportError:
-    Prophet = None
+st.markdown("""
+<style>
+    body {
+        background-color: #f5f5f5;
+    }
+    .stApp {
+        background-color: #f5f5f5;
+    }
+</style>
+""", unsafe_allow_html=True)
 
 # Your n8n production webhook URL
 N8N_WEBHOOK_URL = "https://f089-62-250-42-200.ngrok-free.app/webhook/f189b9b1-314e-4bbc-a8e4-105912501679"
