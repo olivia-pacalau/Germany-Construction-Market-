@@ -193,19 +193,19 @@ else:
     st.warning("No predictions available yet.")
 
 # Prophet Forecast section
-if Prophet:
-    df_prophet = pd.read_sql("SELECT datetime, building_permits FROM market_data_monthly WHERE building_permits IS NOT NULL ORDER BY datetime", conn)
-    df_prophet = df_prophet.rename(columns={"datetime": "ds", "building_permits": "y"})
+# if Prophet:
+#     df_prophet = pd.read_sql("SELECT datetime, building_permits FROM market_data_monthly WHERE building_permits IS NOT NULL ORDER BY datetime", conn)
+#     df_prophet = df_prophet.rename(columns={"datetime": "ds", "building_permits": "y"})
 
-    m = Prophet()
-    m.fit(df_prophet)
-    future = m.make_future_dataframe(periods=3, freq="M")
-    forecast = m.predict(future)
+#     m = Prophet()
+#     m.fit(df_prophet)
+#     future = m.make_future_dataframe(periods=3, freq="M")
+#     forecast = m.predict(future)
 
-    fig_prophet = plot_plotly(m, forecast)
-    st.plotly_chart(fig_prophet, use_container_width=True)
-else:
-    st.warning("Prophet library not installed. Forecasting feature unavailable.")
+#     fig_prophet = plot_plotly(m, forecast)
+#     st.plotly_chart(fig_prophet, use_container_width=True)
+# else:
+#     st.warning("Prophet library not installed. Forecasting feature unavailable.")
 
 # SQL Query Viewer Section
 st.markdown("---")
