@@ -9,10 +9,10 @@ st.set_page_config(layout="wide")
 st.markdown("""
 <style>
     body {
-        background-color: #cfcccc;
+        background-color: #f5f5f5;
     }
     .stApp {
-        background-color: #cfcccc;
+        background-color: #f5f5f5;
     }
 </style>
 """, unsafe_allow_html=True)
