@@ -219,7 +219,7 @@ st.markdown("---")
 with st.expander("🧠 SQL Growth Queries", expanded=False):
     st.header("SQL Growth Queries")
     with st.expander("📄 Show Year-over-Year Growth SQL Query"):
-        query_yoy = """"
+        query_yoy = """
         WITH yearly AS (
             SELECT
                 CAST(STRFTIME('%Y', datetime) AS INTEGER) AS year,
@@ -240,4 +240,63 @@ with st.expander("🧠 SQL Growth Queries", expanded=False):
                 ROUND((curr.residential_prices - prev.residential_prices) * 100.0 / prev.residential_prices, 2) AS prices_yoy_pct,
                 ROUND(curr.price_to_rent_ratio, 2) AS current_ratio,
                 ROUND(prev.price_to_rent_ratio, 2) AS previous_ratio,
-                ROUND((curr.price_to_rent_ratio - prev.price_to_rent_ratio) * 100.0 / prev.price_to_rent_ratio
+                ROUND((curr.price_to_rent_ratio - prev.price_to_rent_ratio) * 100.0 / prev.price_to_rent_ratio, 2) AS ratio_yoy_pct,
+                ROUND(curr.construction_output, 2) AS current_output,
+                ROUND(prev.construction_output, 2) AS previous_output,
+                ROUND((curr.construction_output - prev.construction_output) * 100.0 / prev.construction_output, 2) AS output_yoy_pct
+            FROM yearly curr
+            JOIN yearly prev ON curr.year = prev.year + 1
+        )
+        SELECT * FROM yoy
+        ORDER BY year;
+        """
+        st.code(query_yoy, language="sql")
+
+# Table View of Market Data Quarterly
+st.markdown("---")
+st.header("📋 Quarterly Market Data Table")
+df_quarterly = pd.read_sql("SELECT * FROM market_data_quarterly ORDER BY datetime DESC", conn)
+df_quarterly['datetime'] = pd.to_datetime(df_quarterly['datetime'])
+df_quarterly['quarter_label'] = df_quarterly['datetime'].apply(lambda d: f"{d.year} Q{(d.month-1)//3 + 1}")
+df_quarterly_display = df_quarterly[['quarter_label', 'building_permits', 'construction_output', 'price_to_rent_ratio', 'residential_prices']]
+st.dataframe(df_quarterly_display, use_container_width=True)
+st.download_button(label="Download Quarterly Data", data=df_quarterly_display.to_csv(index=False), file_name="quarterly_market_data.csv", mime="text/csv")
+
+# Year-over-Year Growth Section (Boxed)
+with st.container(border=True):
+    st.markdown("### 📊 Year-over-Year Growth")
+    df_yoy = pd.read_sql(query_yoy, conn)
+    df_yoy_melt = df_yoy.melt(id_vars="year", value_vars=["permits_yoy_pct", "prices_yoy_pct", "ratio_yoy_pct", "output_yoy_pct"], var_name="Metric", value_name="YoY Growth (%)")
+    df_yoy_melt["Metric"] = df_yoy_melt["Metric"].replace({
+        "permits_yoy_pct": "Building Permits",
+        "prices_yoy_pct": "Residential Prices",
+        "ratio_yoy_pct": "Price-to-Rent Ratio",
+        "output_yoy_pct": "Construction Output"
+    })
+    fig_yoy = px.bar(df_yoy_melt, x="year", y="YoY Growth (%)", color="Metric", barmode="group", text="YoY Growth (%)", color_discrete_sequence=px.colors.qualitative.Set2)
+    fig_yoy.update_traces(textposition="outside")
+    fig_yoy.update_layout(yaxis_tickformat=".2f", xaxis_title="Year", yaxis_title="% Change")
+    st.plotly_chart(fig_yoy, use_container_width=True)
+    # Heatmap alternative
+    st.subheader("YoY Growth Heatmap")
+    heatmap_data = df_yoy.pivot(index="year", columns="Metric", values="YoY Growth (%)")
+    fig_heatmap = px.imshow(heatmap_data.T, text_auto=".2f", aspect="auto", color_continuous_scale="RdYlGn")
+    st.plotly_chart(fig_heatmap, use_container_width=True)
+    with st.expander("🔍 View Raw Data Table"):
+        st.dataframe(df_yoy, use_container_width=True)
+        st.download_button(label="Download YoY Data", data=df_yoy.to_csv(index=False), file_name="yoy_growth_data.csv", mime="text/csv")
+
+# Moving Average Section (Boxed)
+with st.container(border=True):
+    st.markdown("### 🧮 Construction Output – 3-Month Moving Average")
+    df_ma = pd.read_sql("SELECT * FROM market_data_m_avg", conn)
+    fig_ma = px.line(df_ma, x="date", y=["current_output", "output_3mo_avg"], labels={"value": "Construction Output", "date": "Date"},
+                     title="Construction Output vs 3-Month Moving Average", color_discrete_map={"current_output": "#1f77b4", "output_3mo_avg": "#ff7f0e"})
+    fig_ma.update_layout(legend_title_text="Legend")
+    st.plotly_chart(fig_ma, use_container_width=True)
+    with st.expander("🔍 View Moving Average Data"):
+        st.dataframe(df_ma, use_container_width=True)
+        st.download_button(label="Download MA Data", data=df_ma.to_csv(index=False), file_name="moving_average_data.csv", mime="text/csv")
+
+# Close the database connection
+conn.close()
