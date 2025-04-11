@@ -158,7 +158,7 @@ with st.container(border=True):
 
 # Building Permits Forecast Section (Restored with Box)
 with st.container(border=True):
-    st.markdown("### 📈 Building Permits Forecast")
+    st.markdown("### 📈 Building Permits Forecast Based on Residential Property Prices")
     df_pred = pd.read_sql("SELECT * FROM building_permit_predictions ORDER BY current_quarter DESC LIMIT 1", conn)
     if not df_pred.empty:
         actual = int(df_pred["actual_permits"].values[0])
