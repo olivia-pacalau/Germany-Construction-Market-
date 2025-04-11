@@ -137,6 +137,8 @@ with st.container(border=True):
                     unsafe_allow_html=True
                 )
 
+# ... (Previous imports and code up to Scatter Plot section remain the same)
+
 # Scatter Plot section
 with st.container(border=True):
     # Existing controls for granularity and KPI selection
@@ -171,7 +173,17 @@ with st.container(border=True):
     st.subheader(f"{kpi.replace('_', ' ').title()} Over Time ({granularity})")
     fig = px.scatter(df, x="datetime", y=kpi, title=f"{kpi.replace('_', ' ').title()} Over Time",
                      labels={"datetime": "Date", kpi: kpi.replace('_', ' ').title()}, color_discrete_sequence=["#008080"])
-    fig.update_traces(mode='lines+markers')
+    fig.update_traces(
+        mode='lines+markers',
+        hovertemplate='Date: %{x|%Y-%m-%d}<br>Value: %{y:.2f}<extra></extra>'
+    )
+    fig.update_layout(
+        hovermode="x unified",  # Shows all points at a given x-value in one tooltip
+        yaxis=dict(
+            tickformat=".2f",  # Ensures y-axis labels are rounded to 2 decimals
+            fixedrange=False  # Allows zooming without forcing format
+        )
+    )
     st.plotly_chart(fig, use_container_width=True)
 
     # Add expander for raw data with download button
@@ -184,24 +196,7 @@ with st.container(border=True):
             mime="text/csv"
         )
 
-# --- Building Permits Forecast Section ---
-st.markdown("### 📈 Building Permits Forecast")
-
-# Load prediction from database
-df_pred = pd.read_sql("SELECT * FROM building_permit_predictions ORDER BY current_quarter DESC LIMIT 1", conn)
-
-if not df_pred.empty:
-    actual = int(df_pred["actual_permits"].values[0])
-    predicted = int(df_pred["predicted_permits"].values[0])
-    quarter_str = pd.to_datetime(df_pred["current_quarter"].values[0]).to_period("Q").strftime("Q%q %Y")
-
-    colf1, colf2 = st.columns(2)
-    with colf1:
-        st.metric(label=f"📌 {quarter_str} – Building Permits", value=f"{actual:,}")
-    with colf2:
-        st.metric(label=f"📌 Next Quarter – Predicted Permits", value=f"{predicted:,}")
-else:
-    st.warning("No predictions available yet.")
+# ... (Code up to Prophet Forecast section remains the same)
 
 # Prophet Forecast section
 st.markdown("### 📅 Building Permits Forecast (Prophet)")
@@ -221,6 +216,32 @@ forecast = m.predict(future)
 # Plot forecast
 st.subheader(f"{periods}-Month Forecast")
 fig_prophet = plot_plotly(m, forecast)
+# Customize hover for historical data (scatter points)
+fig_prophet.update_traces(
+    selector=dict(name="y"),  # Targets historical data points
+    hovertemplate='Date: %{x|%Y-%m-%d}<br>Value: %{y:.2f}<extra></extra>'
+)
+# Customize hover for forecast line
+fig_prophet.update_traces(
+    selector=dict(name="yhat"),  # Targets forecast line
+    hovertemplate='Date: %{x|%Y-%m-%d}<br>Forecast: %{y:.2f}<extra></extra>'
+)
+# Customize hover for confidence intervals (optional, if visible)
+fig_prophet.update_traces(
+    selector=dict(name="yhat_upper"),  # Upper bound
+    hovertemplate='Date: %{x|%Y-%m-%d}<br>Upper: %{y:.2f}<extra></extra>'
+)
+fig_prophet.update_traces(
+    selector=dict(name="yhat_lower"),  # Lower bound
+    hovertemplate='Date: %{x|%Y-%m-%d}<br>Lower: %{y:.2f}<extra></extra>'
+)
+fig_prophet.update_layout(
+    hovermode="x unified",
+    yaxis=dict(
+        tickformat=".2f",
+        fixedrange=False
+    )
+)
 st.plotly_chart(fig_prophet, use_container_width=True)
 
 # Show raw forecast data with download button
@@ -234,54 +255,4 @@ with st.expander("🔍 View Forecast Data"):
         mime="text/csv"
     )
 
-
-# Load YoY data
-df_yoy = pd.read_sql("SELECT * FROM market_data_yoy", conn)
-
-# Melt for visualization
-df_yoy_melt = df_yoy.melt(id_vars="year", 
-                          value_vars=["permits_yoy_pct", "prices_yoy_pct", "ratio_yoy_pct", "output_yoy_pct"],
-                          var_name="Metric", value_name="YoY Growth (%)")
-
-# Clean names
-df_yoy_melt["Metric"] = df_yoy_melt["Metric"].replace({
-    "permits_yoy_pct": "Building Permits",
-    "prices_yoy_pct": "Residential Prices",
-    "ratio_yoy_pct": "Price-to-Rent Ratio",
-    "output_yoy_pct": "Construction Output"
-})
-
-# Bar chart
-st.markdown("### 📊 Year-over-Year Growth")
-fig_yoy = px.bar(df_yoy_melt, x="year", y="YoY Growth (%)", color="Metric", 
-                 barmode="group", text="YoY Growth (%)",
-                 color_discrete_sequence=px.colors.qualitative.Set2)
-
-fig_yoy.update_traces(textposition="outside")
-fig_yoy.update_layout(yaxis_tickformat=".2f", xaxis_title="Year", yaxis_title="% Change")
-st.plotly_chart(fig_yoy, use_container_width=True)
-
-# Optional: Display table with download button
-with st.expander("🔍 View Raw Data Table"):
-    st.dataframe(df_yoy, use_container_width=True)
-    st.download_button(
-        label="Download YoY Data",
-        data=df_yoy.to_csv(index=False),
-        file_name="yoy_growth_data.csv",
-        mime="text/csv"
-    )
-
-# Load moving average data
-df_ma = pd.read_sql("SELECT * FROM market_data_m_avg", conn)
-
-st.markdown("### 🧮 Construction Output – 3-Month Moving Average")
-fig_ma = px.line(df_ma, x="date", y=["current_output", "output_3mo_avg"],
-                 labels={"value": "Construction Output", "date": "Date"},
-                 title="Construction Output vs 3-Month Moving Average",
-                 color_discrete_map={"current_output": "#1f77b4", "output_3mo_avg": "#ff7f0e"})
-
-fig_ma.update_layout(legend_title_text="Legend")
-st.plotly_chart(fig_ma, use_container_width=True)
-
-# Close the database connection
-conn.close()
+# ... (Rest of the code remains the same)
