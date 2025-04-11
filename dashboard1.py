@@ -67,48 +67,61 @@ st.markdown("""
 
 # Connect to database
 conn = sqlite3.connect("market_data.db")
-df_quarter = pd.read_sql("SELECT * FROM market_data_quarterly ORDER BY datetime DESC LIMIT 2", conn)
+# Visualization section
+with st.container(border=True):
+    # Load quarterly data to calculate QoQ changes
+    df_qoq = pd.read_sql("SELECT * FROM market_data_quarterly ORDER BY datetime DESC LIMIT 2", conn)
+    df_qoq['datetime'] = pd.to_datetime(df_qoq['datetime'])
+    df_qoq = df_qoq.sort_values('datetime')  # Ensure chronological order
 
-# Calculate % change between last 2 quarters
-def calc_qoq_change(col):
-    if len(df_quarter) < 2 or pd.isna(df_quarter[col].iloc[1]) or pd.isna(df_quarter[col].iloc[0]):
-        return None
-    return round(((df_quarter[col].iloc[0] - df_quarter[col].iloc[1]) / df_quarter[col].iloc[1]) * 100, 2)
+    # Calculate QoQ percentage changes
+    if len(df_qoq) == 2:
+        latest = df_qoq.iloc[-1]
+        previous = df_qoq.iloc[-2]
+        metrics = {
+            'Building Permits': 'building_permits',
+            'Construction Output': 'construction_output',
+            'Price-to-Rent Ratio': 'price_to_rent_ratio',
+            'Residential Prices': 'residential_prices'
+        }
+        qoq_changes = {}
+        for display_name, col in metrics.items():
+            if pd.notnull(latest[col]) and pd.notnull(previous[col]) and previous[col] != 0:
+                change = ((latest[col] - previous[col]) / previous[col]) * 100
+                qoq_changes[display_name] = round(change, 2)
+            else:
+                qoq_changes[display_name] = None
 
-# Extract actual values for display
-def get_qoq_values(col):
-    try:
-        curr = df_quarter[col].iloc[0]
-        prev = df_quarter[col].iloc[1]
-        return curr, prev, calc_qoq_change(col)
-    except:
-        return None, None, None
+        # Display QoQ cards
+        st.subheader("Quarter-over-Quarter Changes")
+        cols = st.columns(4)
+        for idx, (display_name, change) in enumerate(qoq_changes.items()):
+            with cols[idx]:
+                if change is not None:
+                    color = "green" if change >= 0 else "red"
+                    sign = "+" if change >= 0 else ""
+                    st.markdown(
+                        f"""
+                        <div style='text-align: center; padding: 10px; border: 1px solid #ddd; border-radius: 5px;'>
+                            <h4 style='margin: 0;'>{display_name}</h4>
+                            <p style='color: {color}; font-size: 18px; margin: 5px 0;'>{sign}{change}%</p>
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
+                else:
+                    st.markdown(
+                        f"""
+                        <div style='text-align: center; padding: 10px; border: 1px solid #ddd; border-radius: 5px;'>
+                            <h4 style='margin: 0;'>{display_name}</h4>
+                            <p style='color: #888; font-size: 18px; margin: 5px 0;'>N/A</p>
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
 
-# Get current/previous values + % change for each KPI
-b_curr, b_prev, b_change = get_qoq_values("building_permits")
-c_curr, c_prev, c_change = get_qoq_values("construction_output")
-r_curr, r_prev, r_change = get_qoq_values("residential_prices")
-pr_curr, pr_prev, pr_change = get_qoq_values("price_to_rent_ratio")
-
-# Display cards in 4 columns using Streamlit's built-in `st.metric`
-st.markdown("### 📊 Quarter-to-Quarter Change")
-col1, col2, col3, col4 = st.columns(4)
-
-with col1:
-    st.metric("Building Permits", value=f"{int(b_curr):,}" if b_curr else "N/A",
-              delta=f"{b_change:+.2f}%" if b_change is not None else "N/A")
-
-with col2:
-    st.metric("Construction Output", value=f"{int(c_curr):,}" if c_curr else "N/A",
-              delta=f"{c_change:+.2f}%" if c_change is not None else "N/A")
-
-with col3:
-    st.metric("Residential Prices", value=f"{r_curr:,.2f}" if r_curr else "N/A",
-              delta=f"{r_change:+.2f}%" if r_change is not None else "N/A")
-
-with col4:
-    st.metric("Price-to-Rent Ratio", value=f"{pr_curr:,.2f}" if pr_curr else "N/A",
-              delta=f"{pr_change:+.2f}%" if pr_change is not None else "N/A")
+    else:
+        st.warning("Not enough data to calculate QoQ changes.")
 
 # Visualization section
 with st.container(border=True):
