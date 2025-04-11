@@ -174,9 +174,15 @@ with st.container(border=True):
     fig.update_traces(mode='lines+markers')
     st.plotly_chart(fig, use_container_width=True)
 
-    # Add expander for raw data
+    # Add expander for raw data with download button
     with st.expander("🔍 View Raw Data Table"):
         st.dataframe(df, use_container_width=True)
+        st.download_button(
+            label="Download Data",
+            data=df.to_csv(index=False),
+            file_name=f"scatter_data_{granularity.lower()}.csv",
+            mime="text/csv"
+        )
 
 # --- Building Permits Forecast Section ---
 st.markdown("### 📈 Building Permits Forecast")
@@ -207,59 +213,27 @@ df_prophet['ds'] = pd.to_datetime(df_prophet['ds'])
 m = Prophet()
 m.fit(df_prophet)
 
-# Create future dataframe for 6 months and 1 year
-future_6m = m.make_future_dataframe(periods=6, freq="M")
-future_1y = m.make_future_dataframe(periods=12, freq="M")
+# Dynamic forecast period with slider
+periods = st.slider("Forecast months", 1, 12, 6)
+future = m.make_future_dataframe(periods=periods, freq="M")
+forecast = m.predict(future)
 
-# Predict
-forecast_6m = m.predict(future_6m)
-forecast_1y = m.predict(future_1y)
+# Plot forecast
+st.subheader(f"{periods}-Month Forecast")
+fig_prophet = plot_plotly(m, forecast)
+st.plotly_chart(fig_prophet, use_container_width=True)
 
-# Plot both forecasts
-st.subheader("6-Month Forecast")
-fig_6m = plot_plotly(m, forecast_6m)
-st.plotly_chart(fig_6m, use_container_width=True)
-
-st.subheader("1-Year Forecast")
-fig_1y = plot_plotly(m, forecast_1y)
-st.plotly_chart(fig_1y, use_container_width=True)
-
-# SQL Query Viewer Section
-st.markdown("---")
-st.header("🧠 SQL Growth Queries")
-with st.expander("📄 Show Year-over-Year Growth SQL Query"):
-    query_yoy = """
-    WITH yearly AS (
-        SELECT
-            CAST(STRFTIME('%Y', datetime) AS INTEGER) AS year,
-            building_permits,
-            residential_prices,
-            price_to_rent_ratio,
-            construction_output
-        FROM market_data_yearly
-    ),
-    yoy AS (
-        SELECT
-            curr.year,
-            ROUND(curr.building_permits, 2) AS current_permits,
-            ROUND(prev.building_permits, 2) AS previous_permits,
-            ROUND((curr.building_permits - prev.building_permits) * 100.0 / prev.building_permits, 2) AS permits_yoy_pct
-        FROM yearly curr
-        JOIN yearly prev ON curr.year = prev.year + 1
+# Show raw forecast data with download button
+with st.expander("🔍 View Forecast Data"):
+    forecast_display = forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']]
+    st.dataframe(forecast_display, use_container_width=True)
+    st.download_button(
+        label="Download Forecast Data",
+        data=forecast_display.to_csv(index=False),
+        file_name=f"prophet_forecast_{periods}_months.csv",
+        mime="text/csv"
     )
-    SELECT * FROM yoy
-    ORDER BY year;
-    """
-    st.code(query_yoy, language="sql")
 
-# Table View of Market Data Quarterly
-st.markdown("---")
-st.header("📋 Quarterly Market Data Table")
-df_quarterly = pd.read_sql("SELECT * FROM market_data_quarterly ORDER BY datetime DESC", conn)
-df_quarterly['datetime'] = pd.to_datetime(df_quarterly['datetime'])
-df_quarterly['quarter_label'] = df_quarterly['datetime'].apply(lambda d: f"{d.year} Q{(d.month-1)//3 + 1}")
-df_quarterly_display = df_quarterly[['quarter_label', 'building_permits', 'construction_output', 'price_to_rent_ratio', 'residential_prices']]
-st.dataframe(df_quarterly_display, use_container_width=True)
 
 # Load YoY data
 df_yoy = pd.read_sql("SELECT * FROM market_data_yoy", conn)
@@ -287,9 +261,15 @@ fig_yoy.update_traces(textposition="outside")
 fig_yoy.update_layout(yaxis_tickformat=".2f", xaxis_title="Year", yaxis_title="% Change")
 st.plotly_chart(fig_yoy, use_container_width=True)
 
-# Optional: Display table
+# Optional: Display table with download button
 with st.expander("🔍 View Raw Data Table"):
     st.dataframe(df_yoy, use_container_width=True)
+    st.download_button(
+        label="Download YoY Data",
+        data=df_yoy.to_csv(index=False),
+        file_name="yoy_growth_data.csv",
+        mime="text/csv"
+    )
 
 # Load moving average data
 df_ma = pd.read_sql("SELECT * FROM market_data_m_avg", conn)
