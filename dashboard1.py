@@ -67,8 +67,10 @@ st.markdown("""
 
 # Connect to database
 conn = sqlite3.connect("market_data.db")
-# Visualization section
+# QoQ Changes section
 with st.container(border=True):
+    st.subheader("Quarter-over-Quarter Changes")
+    
     # Load quarterly data
     df_quarterly = pd.read_sql("SELECT * FROM market_data_quarterly ORDER BY datetime DESC", conn)
     df_quarterly['datetime'] = pd.to_datetime(df_quarterly['datetime'])
@@ -106,7 +108,6 @@ with st.container(border=True):
             quarters_compared[display_name] = "N/A"
 
     # Display QoQ cards
-    st.subheader("Quarter-over-Quarter Changes")
     cols = st.columns(4)
     for idx, (display_name, change) in enumerate(qoq_changes.items()):
         with cols[idx]:
@@ -135,7 +136,8 @@ with st.container(border=True):
                     unsafe_allow_html=True
                 )
 
-    # Existing controls for granularity and KPI selection
+# Scatter Plot section
+with st.container(border=True):
     col_select1, col_select2 = st.columns([1, 2])
 
     with col_select1:
