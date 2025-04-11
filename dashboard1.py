@@ -135,6 +135,7 @@ with st.container(border=True):
                     unsafe_allow_html=True
                 )
                 
+# Scatter Plot section
 with st.container(border=True):
     # Existing controls for granularity and KPI selection
     col_select1, col_select2 = st.columns([1, 2])
@@ -148,6 +149,19 @@ with st.container(border=True):
     df['datetime'] = pd.to_datetime(df['datetime'])
 
     with col_select2:
+        # Apply custom CSS for the selectbox background
+        st.markdown(
+            """
+            <style>
+            div[data-testid="stSelectbox"] select {
+                background-color: #cfcccc;
+                border-radius: 5px;
+                padding: 5px;
+            }
+            </style>
+            """,
+            unsafe_allow_html=True
+        )
         kpi_options = [col for col in df.columns if col not in ["datetime", "year", "quarter"]]
         kpi = st.selectbox("Select indicator to plot:", kpi_options)
 
@@ -157,7 +171,7 @@ with st.container(border=True):
                      labels={"datetime": "Date", kpi: kpi.replace('_', ' ').title()}, color_discrete_sequence=["#008080"])
     fig.update_traces(mode='lines+markers')
     st.plotly_chart(fig, use_container_width=True)
-
+    
 # --- Building Permits Forecast Section ---
 st.markdown("### 📈 Building Permits Forecast")
 
