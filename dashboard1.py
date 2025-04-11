@@ -106,7 +106,6 @@ with st.container(border=True):
             quarters_compared[display_name] = "N/A"
 
     # Display QoQ cards
-    st.subheader("Quarter-over-Quarter Changes")
     cols = st.columns(4)
     for idx, (display_name, change) in enumerate(qoq_changes.items()):
         with cols[idx]:
@@ -116,8 +115,8 @@ with st.container(border=True):
                 st.markdown(
                     f"""
                     <div style='text-align: center; padding: 10px; border: 1px solid #ddd; border-radius: 5px;'>
-                        <h4 style='margin: 0;'>{display_name}</h4>
-                        <p style='color: {color}; font-size: 18px; margin: 5px 0;'>{sign}{change}%</p>
+                        <h4 style='margin: 0; margin-bottom: 10px;'>{display_name}</h4>
+                        <p style='color: {color}; font-size: 18px; margin: 0; margin-bottom: 8px;'>{sign}{change}%</p>
                         <p style='color: #888; font-size: 12px; margin: 0;'>{quarters_compared[display_name]}</p>
                     </div>
                     """,
@@ -127,12 +126,13 @@ with st.container(border=True):
                 st.markdown(
                     f"""
                     <div style='text-align: center; padding: 10px; border: 1px solid #ddd; border-radius: 5px;'>
-                        <h4 style='margin: 0;'>{display_name}</h4>
-                        <p style='color: #888; font-size: 18px; margin: 5px 0;'>N/A</p>
+                        <h4 style='margin: 0; margin-bottom: 10px;'>{display_name}</h4>
+                        <p style='color: #888; font-size: 18px; margin: 0; margin-bottom: 8px;'>N/A</p>
                         <p style='color: #888; font-size: 12px; margin: 0;'>{quarters_compared[display_name]}</p>
                     </div>
                     """,
                     unsafe_allow_html=True
+                )
                 )
 with st.container(border=True):
     # Existing controls for granularity and KPI selection
