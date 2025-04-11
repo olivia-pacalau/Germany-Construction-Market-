@@ -134,7 +134,7 @@ with st.container(border=True):
                     """,
                     unsafe_allow_html=True
                 )
-
+with st.container(border=True):
     # Existing controls for granularity and KPI selection
     col_select1, col_select2 = st.columns([1, 2])
 
