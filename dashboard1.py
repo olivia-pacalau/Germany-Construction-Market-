@@ -55,6 +55,7 @@ with st.sidebar:
                 st.write(assistant_response)
                 st.session_state.messages.append({"role": "assistant", "content": assistant_response})
 
+
 # ----------------- MAIN CONTENT -----------------
 st.markdown("""
 <div style='text-align: center;'>
@@ -64,13 +65,10 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Connect to database once
+# Connect to database
 conn = sqlite3.connect("market_data.db")
-
-# QoQ cards
+# Visualization section
 with st.container(border=True):
-    st.subheader("Quarter-over-Quarter Changes")
-    
     # Load quarterly data
     df_quarterly = pd.read_sql("SELECT * FROM market_data_quarterly ORDER BY datetime DESC", conn)
     df_quarterly['datetime'] = pd.to_datetime(df_quarterly['datetime'])
@@ -108,6 +106,7 @@ with st.container(border=True):
             quarters_compared[display_name] = "N/A"
 
     # Display QoQ cards
+    st.subheader("Quarter-over-Quarter Changes")
     cols = st.columns(4)
     for idx, (display_name, change) in enumerate(qoq_changes.items()):
         with cols[idx]:
@@ -136,8 +135,7 @@ with st.container(border=True):
                     unsafe_allow_html=True
                 )
 
-# Scatter Plot section
-with st.container(border=True):
+    # Existing controls for granularity and KPI selection
     col_select1, col_select2 = st.columns([1, 2])
 
     with col_select1:
@@ -163,6 +161,7 @@ with st.container(border=True):
 st.markdown("### 📈 Building Permits Forecast")
 
 # Load prediction from database
+conn = sqlite3.connect("market_data.db")
 df_pred = pd.read_sql("SELECT * FROM building_permit_predictions ORDER BY current_quarter DESC LIMIT 1", conn)
 
 if not df_pred.empty:
@@ -177,6 +176,21 @@ if not df_pred.empty:
         st.metric(label=f"📌 Next Quarter – Predicted Permits", value=f"{predicted:,}")
 else:
     st.warning("No predictions available yet.")
+
+# Prophet Forecast section
+if Prophet:
+    df_prophet = pd.read_sql("SELECT datetime, building_permits FROM market_data_monthly WHERE building_permits IS NOT NULL ORDER BY datetime", conn)
+    df_prophet = df_prophet.rename(columns={"datetime": "ds", "building_permits": "y"})
+
+    m = Prophet()
+    m.fit(df_prophet)
+    future = m.make_future_dataframe(periods=3, freq="M")
+    forecast = m.predict(future)
+
+    fig_prophet = plot_plotly(m, forecast)
+    st.plotly_chart(fig_prophet, use_container_width=True)
+else:
+    st.warning("Prophet library not installed. Forecasting feature unavailable.")
 
 # SQL Query Viewer Section
 st.markdown("---")
@@ -215,8 +229,11 @@ df_quarterly['quarter_label'] = df_quarterly['datetime'].apply(lambda d: f"{d.ye
 df_quarterly_display = df_quarterly[['quarter_label', 'building_permits', 'construction_output', 'price_to_rent_ratio', 'residential_prices']]
 st.dataframe(df_quarterly_display, use_container_width=True)
 
+conn.close()
+
 # Load YoY data
-df_yoy = pd.read_sql("SELECT * FROM market_data_yoy", conn)
+with sqlite3.connect("market_data.db") as conn:
+    df_yoy = pd.read_sql("SELECT * FROM market_data_yoy", conn)
 
 # Melt for visualization
 df_yoy_melt = df_yoy.melt(id_vars="year", 
@@ -246,9 +263,9 @@ with st.expander("🔍 View Raw Data Table"):
     st.dataframe(df_yoy, use_container_width=True)
 
 # Load moving average data
-df_ma = pd.read_sql("SELECT * FROM market_data_m_avg", conn)
+with sqlite3.connect("market_data.db") as conn:
+    df_ma = pd.read_sql("SELECT * FROM market_data_m_avg", conn)
 
-# Moving Average Plot
 st.markdown("### 🧮 Construction Output – 3-Month Moving Average")
 fig_ma = px.line(df_ma, x="date", y=["current_output", "output_3mo_avg"],
                  labels={"value": "Construction Output", "date": "Date"},
@@ -257,6 +274,3 @@ fig_ma = px.line(df_ma, x="date", y=["current_output", "output_3mo_avg"],
 
 fig_ma.update_layout(legend_title_text="Legend")
 st.plotly_chart(fig_ma, use_container_width=True)
-
-# Close the database connection
-conn.close()
