@@ -106,7 +106,7 @@ with st.container(border=True):
                     f"""
                     <div style='text-align: center; padding: 10px; border: 1px solid #ddd; border-radius: 5px;'>
                         <h4 style='margin: 0; margin-bottom: 10px;'>{display_name}</h4>
-                        <p style='color: {color}; font-size: 20px; margin: 0; margin-bottom: 8px;'>{sign}{change}%</p>
+                        <p style='color: {color}; font-size: 25px; margin: 0; margin-bottom: 8px;'>{sign}{change}%</p>
                         <p style='color: #888; font-size: 12px; margin: 0;'>{quarters_compared[display_name]}</p>
                     </div>
                     """,
@@ -126,7 +126,7 @@ with st.container(border=True):
 
 # Building Permits Forecast Section
 with st.container(border=True):
-    st.markdown("### 📈 Building Permits Forecast Based on Residential Property Prices")
+    st.markdown("### Building Permits Forecast Based on Residential Property Prices")
     df_pred = pd.read_sql("SELECT * FROM building_permit_predictions ORDER BY current_quarter DESC LIMIT 1", conn)
     if not df_pred.empty:
         actual = int(df_pred["actual_permits"].values[0])
@@ -142,9 +142,9 @@ with st.container(border=True):
 
 # Menu for other visualizations
 with st.container(border=True):
-    st.subheader("Additional Visualizations")
+    #st.subheader("Additional Visualizations")
     visualization = st.selectbox(
-        "Select Visualization",
+        "Select Graph",
         [
             "Indicator Over Time (Scatter Plot)",
             "Building Permits Forecast (Prophet)",
