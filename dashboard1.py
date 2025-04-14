@@ -144,7 +144,7 @@ with st.container(border=True):
         st.warning("No predictions available yet.")
 
 # EXPANDABLE SECTION: Indicators Trends
-with st.expander("\ud83d\udcca Indicators Trends Over Time"):
+with st.expander(" Indicators Trends Over Time"):
     col_select1, col_select2 = st.columns([1, 2])
     with col_select1:
         granularity = st.radio("Select data granularity:", ["Quarterly", "Yearly"], horizontal=True)
