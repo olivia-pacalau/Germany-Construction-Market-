@@ -16,6 +16,10 @@ st.markdown("""
     .stApp {
         background-color: #f5f5f5;
     }
+    details > summary {
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -123,39 +127,6 @@ with st.container(border=True):
                     unsafe_allow_html=True
                 )
 
-# Scatter Plot section
-with st.container(border=True):
-    col_select1, col_select2 = st.columns([1, 2])
-    with col_select1:
-        granularity = st.radio("Select data granularity:", ["Quarterly", "Yearly"], horizontal=True)
-    table = "market_data_quarterly" if granularity == "Quarterly" else "market_data_yearly"
-    df = pd.read_sql(f"SELECT * FROM {table}", conn)
-    df['datetime'] = pd.to_datetime(df['datetime'])
-    with col_select2:
-        st.markdown(
-            """
-            <style>
-            div[data-testid="stSelectbox"] select {
-                background-color: #cfcccc;
-                border-radius: 5px;
-                padding: 5px;
-            }
-            </style>
-            """,
-            unsafe_allow_html=True
-        )
-        kpi_options = [col for col in df.columns if col not in ["datetime", "year", "quarter"]]
-        kpi = st.selectbox("Select indicator to plot:", kpi_options)
-    st.subheader(f"{kpi.replace('_', ' ').title()} Over Time ({granularity})")
-    fig = px.scatter(df, x="datetime", y=kpi, title=f"{kpi.replace('_', ' ').title()} Over Time",
-                     labels={"datetime": "Date", kpi: kpi.replace('_', ' ').title()}, color_discrete_sequence=["#008080"])
-    fig.update_traces(mode='lines+markers', hovertemplate='Date: %{x|%Y-%m-%d}<br>Value: %{y:.2f}<extra></extra>')
-    fig.update_layout(hovermode="x unified", yaxis=dict(tickformat=".2f", fixedrange=False))
-    st.plotly_chart(fig, use_container_width=True)
-    with st.expander("🔍 View Raw Data Table"):
-        st.dataframe(df, use_container_width=True)
-        st.download_button(label="Download Data", data=df.to_csv(index=False), file_name=f"scatter_data_{granularity.lower()}.csv", mime="text/csv")
-
 # Building Permits Forecast Section (Restored with Box)
 with st.container(border=True):
     st.markdown("### 📈 Building Permits Forecast Based on Residential Property Prices")
@@ -172,9 +143,29 @@ with st.container(border=True):
     else:
         st.warning("No predictions available yet.")
 
-# Prophet Forecast section
-with st.container(border=True):
-    st.markdown("### 📅 Building Permits Forecast (Prophet)")
+# EXPANDABLE SECTION: Indicators Trends
+with st.expander("\ud83d\udcca Indicators Trends Over Time"):
+    col_select1, col_select2 = st.columns([1, 2])
+    with col_select1:
+        granularity = st.radio("Select data granularity:", ["Quarterly", "Yearly"], horizontal=True)
+    table = "market_data_quarterly" if granularity == "Quarterly" else "market_data_yearly"
+    df = pd.read_sql(f"SELECT * FROM {table}", conn)
+    df['datetime'] = pd.to_datetime(df['datetime'])
+    with col_select2:
+        kpi_options = [col for col in df.columns if col not in ["datetime", "year", "quarter"]]
+        kpi = st.selectbox("Select indicator to plot:", kpi_options)
+    st.subheader(f"{kpi.replace('_', ' ').title()} Over Time ({granularity})")
+    fig = px.scatter(df, x="datetime", y=kpi, title=f"{kpi.replace('_', ' ').title()} Over Time",
+                     labels={"datetime": "Date", kpi: kpi.replace('_', ' ').title()}, color_discrete_sequence=["#008080"])
+    fig.update_traces(mode='lines+markers', hovertemplate='Date: %{x|%Y-%m-%d}<br>Value: %{y:.2f}<extra></extra>')
+    fig.update_layout(hovermode="x unified", yaxis=dict(tickformat=".2f", fixedrange=False))
+    st.plotly_chart(fig, use_container_width=True)
+    with st.expander("🔍 View Raw Data Table"):
+        st.dataframe(df, use_container_width=True)
+        st.download_button(label="Download Data", data=df.to_csv(index=False), file_name=f"scatter_data_{granularity.lower()}.csv", mime="text/csv")
+
+# EXPANDABLE SECTION: Prophet Forecast
+with st.expander("📅 Building Permits Forecast (Prophet)"):
     df_prophet = pd.read_sql("SELECT datetime, building_permits FROM market_data_monthly WHERE building_permits IS NOT NULL ORDER BY datetime", conn)
     df_prophet = df_prophet.rename(columns={"datetime": "ds", "building_permits": "y"})
     df_prophet['ds'] = pd.to_datetime(df_prophet['ds'])
@@ -185,10 +176,6 @@ with st.container(border=True):
     forecast = m.predict(future)
     st.subheader(f"{periods}-Month Forecast")
     fig_prophet = plot_plotly(m, forecast)
-    fig_prophet.update_traces(selector=dict(name="y"), hovertemplate='Date: %{x|%Y-%m-%d}<br>Value: %{y:.2f}<extra></extra>')
-    fig_prophet.update_traces(selector=dict(name="yhat"), hovertemplate='Date: %{x|%Y-%m-%d}<br>Forecast: %{y:.2f}<extra></extra>')
-    fig_prophet.update_traces(selector=dict(name="yhat_upper"), hovertemplate='Date: %{x|%Y-%m-%d}<br>Upper: %{y:.2f}<extra></extra>')
-    fig_prophet.update_traces(selector=dict(name="yhat_lower"), hovertemplate='Date: %{x|%Y-%m-%d}<br>Lower: %{y:.2f}<extra></extra>')
     fig_prophet.update_layout(hovermode="x unified", yaxis=dict(tickformat=".2f", fixedrange=False))
     st.plotly_chart(fig_prophet, use_container_width=True)
     with st.expander("🔍 View Forecast Data"):
@@ -196,9 +183,8 @@ with st.container(border=True):
         st.dataframe(forecast_display, use_container_width=True)
         st.download_button(label="Download Forecast Data", data=forecast_display.to_csv(index=False), file_name=f"prophet_forecast_{periods}_months.csv", mime="text/csv")
 
-# Year-over-Year Growth Section
-with st.container(border=True):
-    st.markdown("### 📊 Year-over-Year Growth")
+# EXPANDABLE SECTION: Year-over-Year Growth
+with st.expander("\ud83d\udcc8 Year-over-Year Growth"):
     df_yoy = pd.read_sql("SELECT * FROM market_data_yoy", conn)
     df_yoy_melt = df_yoy.melt(id_vars="year", value_vars=["permits_yoy_pct", "prices_yoy_pct", "ratio_yoy_pct", "output_yoy_pct"], var_name="Metric", value_name="YoY Growth (%)")
     df_yoy_melt["Metric"] = df_yoy_melt["Metric"].replace({
@@ -215,9 +201,8 @@ with st.container(border=True):
         st.dataframe(df_yoy, use_container_width=True)
         st.download_button(label="Download YoY Data", data=df_yoy.to_csv(index=False), file_name="yoy_growth_data.csv", mime="text/csv")
 
-# Moving Average Section
-with st.container(border=True):
-    st.markdown("### 🧮 Construction Output – 3-Month Moving Average")
+# EXPANDABLE SECTION: Moving Average
+with st.expander("\ud83d\udcc0 Construction Output – 3-Month Moving Average"):
     df_ma = pd.read_sql("SELECT * FROM market_data_m_avg", conn)
     fig_ma = px.line(df_ma, x="date", y=["current_output", "output_3mo_avg"], labels={"value": "Construction Output", "date": "Date"},
                      title="Construction Output vs 3-Month Moving Average", color_discrete_map={"current_output": "#1f77b4", "output_3mo_avg": "#ff7f0e"})
