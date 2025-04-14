@@ -11,13 +11,20 @@ st.markdown("""
 <style>
     body {
         background-color: #f5f5f5;
+        margin-top: 10px !important;
     }
     .stApp {
         background-color: #f5f5f5;
     }
-    details > summary {
-        font-size: 1.1rem;
-        font-weight: 600;
+    h1 {
+        margin-bottom: 0.3em !important;
+    }
+    h3 {
+        margin-top: 0.1em !important;
+    }
+    .qoq-value {
+        font-size: 24px !important;
+        font-weight: bold;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -84,9 +91,9 @@ else:
 with main_col:
     st.markdown("""
     <div style='text-align: center;'>
-        <h1 style='margin-bottom: 0;'>Construction Market Analytics</h1>
-        <h3 style='margin-top: 0;'>🇩🇪 Germany</h3>
-        <p style='font-size: 14px'><a href='https://tradingeconomics.com/' target='_blank'>Data Source: TradingEconomics.com</a></p>
+        <h1 style='margin-bottom: 0.2em;'>Construction Market Analytics</h1>
+        <h3 style='margin-top: 0.1em;'>🇩🇪 Germany</h3>
+        <p style='font-size: 14px; margin-bottom: 1em;'><a href='https://tradingeconomics.com/' target='_blank'>Data Source: TradingEconomics.com</a></p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -130,7 +137,7 @@ with main_col:
                     f"""
                     <div style='text-align: center; padding: 10px; border: 1px solid #ddd; border-radius: 5px;'>
                         <h4 style='margin: 0; margin-bottom: 10px;'>{display_name}</h4>
-                        <p style='color: {color}; font-size: 18px; margin: 0; margin-bottom: 8px;'>{sign}{change}%</p>
+                        <p class='qoq-value' style='color: {color}; margin: 0; margin-bottom: 8px;'>{sign}{change}%</p>
                         <p style='color: #888; font-size: 12px; margin: 0;'>{quarters_compared[display_name]}</p>
                     </div>
                     """,
@@ -141,86 +148,43 @@ with main_col:
                     f"""
                     <div style='text-align: center; padding: 10px; border: 1px solid #ddd; border-radius: 5px;'>
                         <h4 style='margin: 0; margin-bottom: 10px;'>{display_name}</h4>
-                        <p style='color: #888; font-size: 18px; margin: 0; margin-bottom: 8px;'>N/A</p>
+                        <p class='qoq-value' style='color: #888; margin: 0; margin-bottom: 8px;'>N/A</p>
                         <p style='color: #888; font-size: 12px; margin: 0;'>{quarters_compared[display_name]}</p>
                     </div>
                     """,
                     unsafe_allow_html=True
                 )
 
+    st.markdown("<div style='margin-top: 30px'></div>", unsafe_allow_html=True)
     st.markdown("### 📈 Building Permits Forecast Based on Residential Property Prices")
+
     df_pred = pd.read_sql("SELECT * FROM building_permit_predictions ORDER BY current_quarter DESC LIMIT 1", conn)
     if not df_pred.empty:
         actual = int(df_pred["actual_permits"].values[0])
         predicted = int(df_pred["predicted_permits"].values[0])
         quarter_str = pd.to_datetime(df_pred["current_quarter"].values[0]).to_period("Q").strftime("Q%q %Y")
-        colf1, colf2 = st.columns(2)
-        with colf1:
-            st.metric(label=f"📌 {quarter_str} – Building Permits", value=f"{actual:,}")
-        with colf2:
-            st.metric(label=f"📌 Next Quarter – Predicted Permits", value=f"{predicted:,}")
+        cardcol1, cardcol2 = st.columns(2)
+        with cardcol1:
+            st.markdown(
+                f"""
+                <div style='padding: 15px; border: 1px solid #ccc; border-radius: 10px; background-color: #fff;'>
+                    <h5 style='margin: 0 0 5px 0;'>📌 {quarter_str} – Building Permits</h5>
+                    <p style='font-size: 28px; font-weight: bold; margin: 0;'>{actual:,}</p>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+        with cardcol2:
+            st.markdown(
+                f"""
+                <div style='padding: 15px; border: 1px solid #ccc; border-radius: 10px; background-color: #fff;'>
+                    <h5 style='margin: 0 0 5px 0;'>📌 Next Quarter – Predicted Permits</h5>
+                    <p style='font-size: 28px; font-weight: bold; margin: 0;'>{predicted:,}</p>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
     else:
         st.warning("No predictions available yet.")
 
-    # Section routing
-    if selected_section == "Indicators Trends":
-        st.subheader("📊 Indicators Trends Over Time")
-        col_select1, col_select2 = st.columns([1, 2])
-        with col_select1:
-            granularity = st.radio("Select data granularity:", ["Quarterly", "Yearly"], horizontal=True)
-        table = "market_data_quarterly" if granularity == "Quarterly" else "market_data_yearly"
-        df = pd.read_sql(f"SELECT * FROM {table}", conn)
-        df['datetime'] = pd.to_datetime(df['datetime'])
-        with col_select2:
-            kpi_options = [col for col in df.columns if col not in ["datetime", "year", "quarter"]]
-            kpi = st.selectbox("Select indicator to plot:", kpi_options)
-        fig = px.scatter(df, x="datetime", y=kpi, labels={"datetime": "Date", kpi: kpi.replace('_', ' ').title()}, color_discrete_sequence=["#008080"])
-        fig.update_traces(mode='lines+markers')
-        fig.update_layout(hovermode="x unified")
-        st.plotly_chart(fig, use_container_width=True)
-        if st.toggle("🔍 Show Raw Data Table", key="scatter_table"):
-            st.dataframe(df)
-
-    elif selected_section == "Prophet Forecast":
-        st.subheader("📅 Building Permits Forecast (Prophet)")
-        df_prophet = pd.read_sql("SELECT datetime, building_permits FROM market_data_monthly WHERE building_permits IS NOT NULL ORDER BY datetime", conn)
-        df_prophet = df_prophet.rename(columns={"datetime": "ds", "building_permits": "y"})
-        df_prophet['ds'] = pd.to_datetime(df_prophet['ds'])
-        m = Prophet()
-        m.fit(df_prophet)
-        periods = st.slider("Forecast months", 1, 12, 6)
-        future = m.make_future_dataframe(periods=periods, freq="M")
-        forecast = m.predict(future)
-        fig_prophet = plot_plotly(m, forecast)
-        fig_prophet.update_layout(hovermode="x unified")
-        st.plotly_chart(fig_prophet, use_container_width=True)
-        if st.toggle("🔍 Show Forecast Data Table", key="prophet_table"):
-            st.dataframe(forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']])
-
-    elif selected_section == "YoY Growth":
-        st.subheader("📈 Year-over-Year Growth")
-        df_yoy = pd.read_sql("SELECT * FROM market_data_yoy", conn)
-        df_yoy_melt = df_yoy.melt(id_vars="year", value_vars=["permits_yoy_pct", "prices_yoy_pct", "ratio_yoy_pct", "output_yoy_pct"], var_name="Metric", value_name="YoY Growth (%)")
-        df_yoy_melt["Metric"] = df_yoy_melt["Metric"].replace({
-            "permits_yoy_pct": "Building Permits",
-            "prices_yoy_pct": "Residential Prices",
-            "ratio_yoy_pct": "Price-to-Rent Ratio",
-            "output_yoy_pct": "Construction Output"
-        })
-        fig_yoy = px.bar(df_yoy_melt, x="year", y="YoY Growth (%)", color="Metric", barmode="group", text="YoY Growth (%)")
-        fig_yoy.update_traces(textposition="outside")
-        fig_yoy.update_layout(yaxis_tickformat=".2f")
-        st.plotly_chart(fig_yoy, use_container_width=True)
-        if st.toggle("🔍 Show Year-over-Year Raw Data", key="yoy_table"):
-            st.dataframe(df_yoy)
-
-    elif selected_section == "Moving Average":
-        st.subheader("📐 Construction Output – 3-Month Moving Average")
-        df_ma = pd.read_sql("SELECT * FROM market_data_m_avg", conn)
-        fig_ma = px.line(df_ma, x="date", y=["current_output", "output_3mo_avg"], labels={"value": "Construction Output", "date": "Date"})
-        fig_ma.update_layout(legend_title_text="Legend")
-        st.plotly_chart(fig_ma, use_container_width=True)
-        if st.toggle("🔍 Show Raw Data Table", key="ma_table"):
-            st.dataframe(df_ma)
-
-    conn.close()
+    st.markdown("<div style='margin-top: 30px'></div>", unsafe_allow_html=True)
