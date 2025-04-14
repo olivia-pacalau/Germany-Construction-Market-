@@ -25,50 +25,61 @@ st.markdown("""
 # Your n8n production webhook URL
 N8N_WEBHOOK_URL = "https://b1e0-62-250-42-200.ngrok-free.app/webhook/f189b9b1-314e-4bbc-a8e4-105912501679"
 
-# Initialize session state to store chat history
+# Initialize session state
 if "messages" not in st.session_state:
     st.session_state.messages = [{"role": "assistant", "content": "Hi! How can I assist you today?"}]
+if "show_sidebar" not in st.session_state:
+    st.session_state.show_sidebar = True
 
-# Layout: Main content and custom sidebar
+# Toggle Button
+topcol1, topcol2 = st.columns([5, 1])
+with topcol2:
+    toggle_label = "📂 Hide Menu" if st.session_state.show_sidebar else "📂 Show Menu"
+    if st.button(toggle_label):
+        st.session_state.show_sidebar = not st.session_state.show_sidebar
+
+# Sidebar layout
 main_col, sidebar_col = st.columns([4, 1.3], gap="large")
 
-with sidebar_col:
-    st.header("📊 Sections")
-    selected_section = st.radio("Jump to:", [
-        "Indicators Trends",
-        "Prophet Forecast",
-        "YoY Growth",
-        "Moving Average"
-    ])
+if st.session_state.show_sidebar:
+    with sidebar_col:
+        st.header("📊 Sections")
+        selected_section = st.radio("Jump to:", [
+            "Indicators Trends",
+            "Prophet Forecast",
+            "YoY Growth",
+            "Moving Average"
+        ])
 
-    st.divider()
-    st.header("💬 Chat with Assistant")
-    chat_container = st.container(height=300)
-    with chat_container:
-        for message in st.session_state.messages:
-            with st.chat_message(message["role"]):
-                st.write(message["content"])
-    if prompt := st.chat_input("Type your message here", key="sidebar_chat_input"):
-        st.session_state.messages.append({"role": "user", "content": prompt})
+        st.divider()
+        st.header("💬 Chat with Assistant")
+        chat_container = st.container(height=300)
         with chat_container:
-            with st.chat_message("user"):
-                st.write(prompt)
-            with st.chat_message("assistant"):
-                with st.spinner("Processing your request... This may take up to 30 seconds."):
-                    try:
-                        payload = {"message": prompt}
-                        headers = {"Content-Type": "application/json"}
-                        response = requests.post(N8N_WEBHOOK_URL, json=payload, headers=headers, timeout=300)
-                        response.raise_for_status()
-                        assistant_response = response.text
-                    except requests.exceptions.RequestException as e:
-                        assistant_response = f"Error connecting to n8n: {str(e)}"
-                        st.write(f"Error: {assistant_response}")
-                st.write(assistant_response)
-                st.session_state.messages.append({"role": "assistant", "content": assistant_response})
+            for message in st.session_state.messages:
+                with st.chat_message(message["role"]):
+                    st.write(message["content"])
+        if prompt := st.chat_input("Type your message here", key="sidebar_chat_input"):
+            st.session_state.messages.append({"role": "user", "content": prompt})
+            with chat_container:
+                with st.chat_message("user"):
+                    st.write(prompt)
+                with st.chat_message("assistant"):
+                    with st.spinner("Processing your request... This may take up to 30 seconds."):
+                        try:
+                            payload = {"message": prompt}
+                            headers = {"Content-Type": "application/json"}
+                            response = requests.post(N8N_WEBHOOK_URL, json=payload, headers=headers, timeout=300)
+                            response.raise_for_status()
+                            assistant_response = response.text
+                        except requests.exceptions.RequestException as e:
+                            assistant_response = f"Error connecting to n8n: {str(e)}"
+                            st.write(f"Error: {assistant_response}")
+                    st.write(assistant_response)
+                    st.session_state.messages.append({"role": "assistant", "content": assistant_response})
+else:
+    selected_section = "Indicators Trends"  # default fallback
 
 with main_col:
-    # Header and subtitle
     st.markdown("""
     <div style='text-align: center;'>
         <h1 style='margin-bottom: 0;'>Construction Market Analytics</h1>
@@ -79,7 +90,6 @@ with main_col:
 
     conn = sqlite3.connect("market_data.db")
 
-    # QoQ Cards
     st.subheader("Quarter-over-Quarter Changes")
     df_quarterly = pd.read_sql("SELECT * FROM market_data_quarterly ORDER BY datetime DESC", conn)
     df_quarterly['datetime'] = pd.to_datetime(df_quarterly['datetime'])
@@ -136,7 +146,6 @@ with main_col:
                     unsafe_allow_html=True
                 )
 
-    # Forecast Cards
     st.markdown("### 📈 Building Permits Forecast Based on Residential Property Prices")
     df_pred = pd.read_sql("SELECT * FROM building_permit_predictions ORDER BY current_quarter DESC LIMIT 1", conn)
     if not df_pred.empty:
@@ -151,7 +160,6 @@ with main_col:
     else:
         st.warning("No predictions available yet.")
 
-    # Display section based on sidebar selection
     if selected_section == "Indicators Trends":
         st.subheader("📊 Indicators Trends Over Time")
         col_select1, col_select2 = st.columns([1, 2])
