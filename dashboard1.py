@@ -20,7 +20,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Your n8n production webhook URL
-N8N_WEBHOOK_URL = "https://f089-62-250-42-200.ngrok-free.app/webhook/f189b9b1-314e-4bbc-a8e4-105912501679"
+N8N_WEBHOOK_URL = "https://b1e0-62-250-42-200.ngrok-free.app/webhook/f189b9b1-314e-4bbc-a8e4-105912501679"
 
 # Initialize session state to store chat history
 if "messages" not in st.session_state:
