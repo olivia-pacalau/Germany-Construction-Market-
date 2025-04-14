@@ -57,8 +57,8 @@ with st.sidebar:
 # ----------------- MAIN CONTENT -----------------
 st.markdown("""
 <div style='text-align: center;'>
-    <h1 style='margin-bottom: 0;'>Construction Market Analytics</h1>
-    <h3 style='margin-top: 0;'>🇩🇪 Germany</h3>
+    <h2 style='margin-bottom: 0;'>Construction Market Analytics</h2>
+    <h4 style='margin-top: 0;'>🇩🇪 Germany</h4>
     <p style='font-size: 14px'><a href='https://tradingeconomics.com/' target='_blank'>Data Source: TradingEconomics.com</a></p>
 </div>
 """, unsafe_allow_html=True)
@@ -106,7 +106,7 @@ with st.container(border=True):
                     f"""
                     <div style='text-align: center; padding: 10px; border: 1px solid #ddd; border-radius: 5px;'>
                         <h4 style='margin: 0; margin-bottom: 10px;'>{display_name}</h4>
-                        <p style='color: {color}; font-size: 18px; margin: 0; margin-bottom: 8px;'>{sign}{change}%</p>
+                        <p style='color: {color}; font-size: 20px; margin: 0; margin-bottom: 8px;'>{sign}{change}%</p>
                         <p style='color: #888; font-size: 12px; margin: 0;'>{quarters_compared[display_name]}</p>
                     </div>
                     """,
