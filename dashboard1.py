@@ -34,14 +34,16 @@ if "show_sidebar" not in st.session_state:
 # Toggle Button
 topcol1, topcol2 = st.columns([5, 1])
 with topcol2:
-    toggle_label = "📂 Hide Menu" if st.session_state.show_sidebar else "📂 Show Menu"
-    if st.button(toggle_label):
+    label = "📂 Hide Sidebar" if st.session_state.show_sidebar else "📂 Show Sidebar"
+    if st.button(label):
         st.session_state.show_sidebar = not st.session_state.show_sidebar
 
-# Sidebar layout
-main_col, sidebar_col = st.columns([4, 1.3], gap="large")
+# Dynamic layout
+top_layout = st.columns([4, 1.3], gap="large") if st.session_state.show_sidebar else [st.container()]
+main_col = top_layout[0]
+sidebar_col = top_layout[1] if st.session_state.show_sidebar else None
 
-if st.session_state.show_sidebar:
+if sidebar_col:
     with sidebar_col:
         st.header("📊 Sections")
         selected_section = st.radio("Jump to:", [
@@ -160,6 +162,7 @@ with main_col:
     else:
         st.warning("No predictions available yet.")
 
+    # Section routing
     if selected_section == "Indicators Trends":
         st.subheader("📊 Indicators Trends Over Time")
         col_select1, col_select2 = st.columns([1, 2])
