@@ -144,7 +144,7 @@ with st.container(border=True):
         st.warning("No predictions available yet.")
 
 # EXPANDABLE SECTION: Indicators Trends
-with st.expander(" Indicators Trends Over Time"):
+with st.expander("Indicators Trends Over Time"):
     col_select1, col_select2 = st.columns([1, 2])
     with col_select1:
         granularity = st.radio("Select data granularity:", ["Quarterly", "Yearly"], horizontal=True)
@@ -165,7 +165,7 @@ with st.expander(" Indicators Trends Over Time"):
         st.download_button(label="Download Data", data=df.to_csv(index=False), file_name=f"scatter_data_{granularity.lower()}.csv", mime="text/csv")
 
 # EXPANDABLE SECTION: Prophet Forecast
-with st.expander("📅 Building Permits Forecast (Prophet)"):
+with st.expander("Building Permits Forecast (Prophet)"):
     df_prophet = pd.read_sql("SELECT datetime, building_permits FROM market_data_monthly WHERE building_permits IS NOT NULL ORDER BY datetime", conn)
     df_prophet = df_prophet.rename(columns={"datetime": "ds", "building_permits": "y"})
     df_prophet['ds'] = pd.to_datetime(df_prophet['ds'])
@@ -184,7 +184,7 @@ with st.expander("📅 Building Permits Forecast (Prophet)"):
         st.download_button(label="Download Forecast Data", data=forecast_display.to_csv(index=False), file_name=f"prophet_forecast_{periods}_months.csv", mime="text/csv")
 
 # EXPANDABLE SECTION: Year-over-Year Growth
-with st.expander("\ud83d\udcc8 Year-over-Year Growth"):
+with st.expander("Year-over-Year Growth"):
     df_yoy = pd.read_sql("SELECT * FROM market_data_yoy", conn)
     df_yoy_melt = df_yoy.melt(id_vars="year", value_vars=["permits_yoy_pct", "prices_yoy_pct", "ratio_yoy_pct", "output_yoy_pct"], var_name="Metric", value_name="YoY Growth (%)")
     df_yoy_melt["Metric"] = df_yoy_melt["Metric"].replace({
@@ -202,7 +202,7 @@ with st.expander("\ud83d\udcc8 Year-over-Year Growth"):
         st.download_button(label="Download YoY Data", data=df_yoy.to_csv(index=False), file_name="yoy_growth_data.csv", mime="text/csv")
 
 # EXPANDABLE SECTION: Moving Average
-with st.expander("\ud83d\udcc0 Construction Output – 3-Month Moving Average"):
+with st.expander("Construction Output – 3-Month Moving Average"):
     df_ma = pd.read_sql("SELECT * FROM market_data_m_avg", conn)
     fig_ma = px.line(df_ma, x="date", y=["current_output", "output_3mo_avg"], labels={"value": "Construction Output", "date": "Date"},
                      title="Construction Output vs 3-Month Moving Average", color_discrete_map={"current_output": "#1f77b4", "output_3mo_avg": "#ff7f0e"})
